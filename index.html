@@ -754,7 +754,7 @@
       el("p", {}, "Questa parte comprende 24 confronti."),
       el("p", {}, "Il video a sinistra, con la cornice blu, è sempre lo stesso. Il video a destra, con la cornice rossa, cambia a ogni confronto."),
       el("p", {}, "Non è necessario riguardare ogni volta il video dell’Agente Blu: rimane disponibile accanto a quello dell’Agente Rosso per consentire un confronto diretto quando serve."),
-      el("p", { class: "muted" }, `Sono ${state.items.p1.length} confronti.`),
+      //el("p", { class: "muted" }, `Sono ${state.items.p1.length} confronti.`),
       navRow({ idx, onNext: () => go(idx + 1) }));
   }
 
@@ -764,7 +764,7 @@
       el("p", {}, "Questa parte comprende 8 confronti. Entrambi i video cambiano a ogni confronto."),
       el("p", {}, "I personaggi sono identificati dai colori verde e arancione. La loro posizione a sinistra o a destra può variare: per riconoscerli, fai riferimento al colore delle linee nell’immagine e delle cornici dei video."),
       el("p", {}, "Anche in questa parte, le domande riguardano separatamente i percorsi, il movimento complessivo e i cambi di direzione."),
-      el("p", { class: "muted" }, `Sono ${state.items.p2.length} confronti.`),
+      //el("p", { class: "muted" }, `Sono ${state.items.p2.length} confronti.`),
       navRow({ idx, onNext: () => go(idx + 1) }));
   }
 
