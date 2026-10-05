@@ -713,10 +713,11 @@
     });
     return el("section", { class: "prose" },
       el("h1", {}, "Come si muovono i personaggi virtuali?"),
-      el("p", {}, "Grazie per partecipare! In questo questionario vedrai brevi video di personaggi virtuali (virtual humans) che camminano nello stesso ambiente, insieme a un'immagine vista dall'alto dei percorsi che hanno seguito."),
-      el("p", {}, "Ti chiediamo di confrontare due personaggi alla volta e di dire quale dei due ti sembra muoversi in modo più naturale."),
-      el("p", {}, `Non ci sono risposte giuste o sbagliate: conta la tua impressione. Il questionario è anonimo e dura circa ${CONFIG.minutiStimati} minuti. Ti consigliamo di compilarlo da computer.`),
-      el("p", {}, "Puoi fare una pausa quando vuoi: se chiudi la pagina e riapri il link dallo stesso computer e browser, riprendi da dove eri rimasto."),
+      el("p", {}, "Grazie per partecipare!"),
+      el("p", {}, "Questo questionario riguarda il movimento di personaggi virtuali. Per ogni confronto verranno mostrati un’immagine dei percorsi visti dall’alto e due brevi video affiancati."),
+      el("p", {}, "Ti verrà chiesto quale dei due personaggi ti sembra più naturale nel percorso, nel movimento complessivo e nei cambi di direzione. Non ci sono risposte giuste o sbagliate: conta la tua impressione."),
+      el("p", {}, `Il questionario è anonimo e la durata stimata è di circa ${CONFIG.minutiStimati} minuti. È consigliabile compilarlo da computer, per osservare meglio immagini e video.`),
+      el("p", {}, "È possibile interrompere la compilazione e riprenderla in seguito: riaprendo il link dallo stesso computer e browser, le risposte già inserite saranno conservate."),
       state && !state.inviato ? el("p", { class: "muted" }, "Hai già iniziato il questionario su questo dispositivo: riprenderai da dove eri rimasto.") : null,
       el("div", { class: "nav" }, el("span", { class: "spacer" }), btn),
       note);
@@ -739,19 +740,20 @@
     return el("section", { class: "prose" },
       el("h2", {}, "Come funziona"),
       el("ul", { class: "steps" },
-        el("li", {}, "Ogni confronto mostra un'immagine dei percorsi e, sotto, due video affiancati."),
-        el("li", {}, "I colori identificano i personaggi: la linea blu nell'immagine e la cornice blu del video sono sempre lo stesso personaggio."),
-        el("li", {}, "Con il pulsante «Riproduci entrambi» fai partire i due video insieme. Puoi rivederli quante volte vuoi."),
-        el("li", {}, "Clicca sull'immagine per vederla a schermo intero."),
-        el("li", {}, "Le domande con l'asterisco (*) sono obbligatorie.")),
+        el("li", {}, "Per ogni confronto, osserva prima l’immagine dei percorsi e rispondi alla domanda corrispondente. Poi guarda i due video e rispondi alle domande sul movimento."),
+        el("li", {}, "I colori identificano i personaggi: ogni linea nell’immagine corrisponde al personaggio mostrato nel video con la cornice dello stesso colore."),
+        el("li", {}, "Cliccando sull’immagine è possibile ingrandirla."),
+        el("li", {}, "Il pulsante «Riproduci entrambi» avvia i due video contemporaneamente. È possibile rivederli quante volte si desidera."),
+        el("li", {}, "Le domande contrassegnate con un asterisco (*) sono obbligatorie. I commenti sono facoltativi")),
       navRow({ back: false, idx, onNext: () => go(idx + 1) }));
   }
 
   function viewP1Intro(_, idx) {
     return el("section", { class: "prose" },
       el("h2", {}, "Parte 1 di 2"),
-      el("p", {}, "In questa parte il video a sinistra mostra sempre lo stesso personaggio, l'Agente Blu. Il video a destra mostra ogni volta un personaggio diverso, l'Agente Rosso."),
-      el("p", {}, "Non serve riguardare ogni volta il video dell'Agente Blu: è lì vicino se vuoi confrontarli direttamente."),
+      el("p", {}, "Questa parte comprende 24 confronti."),
+      el("p", {}, "Il video a sinistra, con la cornice blu, è sempre lo stesso. Il video a destra, con la cornice rossa, cambia a ogni confronto."),
+      el("p", {}, "Non è necessario riguardare ogni volta il video dell’Agente Blu: rimane disponibile accanto a quello dell’Agente Rosso per consentire un confronto diretto quando serve."),
       el("p", { class: "muted" }, `Sono ${state.items.p1.length} confronti.`),
       navRow({ idx, onNext: () => go(idx + 1) }));
   }
@@ -759,8 +761,9 @@
   function viewP2Intro(_, idx) {
     return el("section", { class: "prose" },
       el("h2", {}, "Parte 2 di 2"),
-      el("p", {}, "Ora vedrai coppie di personaggi diversi: cambiano entrambi a ogni confronto."),
-      el("p", {}, "Il colore, verde o arancione, ti dice chi è chi. La loro posizione a sinistra o a destra può cambiare da un confronto all'altro."),
+      el("p", {}, "Questa parte comprende 8 confronti. Entrambi i video cambiano a ogni confronto."),
+      el("p", {}, "I personaggi sono identificati dai colori verde e arancione. La loro posizione a sinistra o a destra può variare: per riconoscerli, fai riferimento al colore delle linee nell’immagine e delle cornici dei video."),
+      el("p", {}, "Anche in questa parte, le domande riguardano separatamente i percorsi, il movimento complessivo e i cambi di direzione."),
       el("p", { class: "muted" }, `Sono ${state.items.p2.length} confronti.`),
       navRow({ idx, onNext: () => go(idx + 1) }));
   }
@@ -829,7 +832,7 @@
       labels: [["Decisamente", "l'Agente Blu"], ["Più", "l'Agente Blu"], ["", "Uguali"], ["Più", "gli Agenti Rossi"], ["Decisamente", "gli Agenti Rossi"]],
     });
     const c = textArea({ name: "p1commento", value: x.p1Commento, onChange: (v) => { x.p1Commento = v; save(); },
-      legend: "Cosa ti ha fatto pensare così? (facoltativa)" });
+      legend: "Quali aspetti hanno influito maggiormente sulla tua risposta? (facoltativa)" });
     return el("section", {},
       progress(1, state.items.p1.length, state.items.p1.length),
       el("h2", {}, "Fine della Parte 1"),
@@ -841,7 +844,7 @@
     const x = state.extra;
     const opts = ["Mai o quasi mai", "Qualche volta", "Spesso"];
     const fam = el("fieldset", {},
-      el("legend", {}, "Quanto ti capita di giocare a videogiochi o usare ambienti 3D? (facoltativa)"),
+      el("legend", {}, "Con quale frequenza giochi ai videogiochi o utilizzi ambienti virtuali 3D? (facoltativa)"),
       el("div", { class: "choices" }, opts.map((o) => {
         const input = el("input", { type: "radio", name: "familiarita", value: o, checked: x.familiarita === o });
         input.addEventListener("change", () => { x.familiarita = o; save(); });
