@@ -1,0 +1,983 @@
+scriptUrl: "https://script.google.com/macros/s/AKfycbxTpuyFcctr0iRjP0MovCtihs-c9TgBGLFImcjxKYSI3n9AJkkv5c7nia7UOJZJ6San8A/exec",
+contatto: "g.reaarnez@campus.unimib.it",   // compare solo se l'invio fallisce
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questionario sul movimento</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  /* Tema solo chiaro: tutti i partecipanti vedono i colori degli agenti nelle stesse condizioni. */
+  :root {
+    --ink: #1c2430;
+    --ink-soft: #4b5563;
+    --paper: #eef1f2;
+    --panel: #ffffff;
+    --rule: #d6dbdf;
+    --grid: #e3e7e9;
+    --neutral: #f4f6f7;
+    --warn-bg: #fff6e0;
+    --warn-ink: #6b4b00;
+    --error: #b42318;
+    --radius: 6px;
+    --col: 68ch;
+    --wide: 1120px;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    color: var(--ink);
+    background-color: var(--paper);
+    /* Griglia tenue come il pavimento a piastrelle della scena */
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  .banner {
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #f0dca8;
+  }
+  .sheet {
+    max-width: var(--wide);
+    margin: 1.5rem auto 3rem;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: clamp(1.25rem, 3.5vw, 2.75rem);
+  }
+  /* Le pagine di solo testo usano un riquadro più stretto */
+  .sheet.narrow { max-width: 780px; }
+  .prose { max-width: var(--col); }
+  h1 {
+    font-size: clamp(1.75rem, 3.2vw, 2.4rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 1rem;
+  }
+  h2 {
+    font-size: 1.45rem;
+    line-height: 1.25;
+    margin: 0 0 1rem;
+  }
+  h1:focus, h2:focus { outline: none; }
+  p { margin: 0 0 1rem; }
+  ul.steps { padding-left: 1.2rem; margin: 0 0 1.5rem; }
+  ul.steps li { margin-bottom: 0.6rem; }
+  .muted { color: var(--ink-soft); }
+  .small { font-size: 0.9rem; }
+  .sr-heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* Avanzamento */
+  .progress { margin: 0 0 1.75rem; }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.4rem;
+  }
+  .progress-track {
+    height: 4px;
+    background: var(--neutral);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill { height: 100%; background: var(--ink); transition: width 0.25s ease; }
+
+  /* Immagine dei percorsi */
+  .traj {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0 0 0.6rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--neutral);
+    cursor: zoom-in;
+    overflow: hidden;
+  }
+  .traj img {
+    display: block;
+    width: 100%;
+    max-height: 86vh;
+    object-fit: contain;
+    background: var(--neutral);
+  }
+  .traj:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+    font-size: 0.95rem;
+    margin: 0 0 1.75rem;
+  }
+  .key span { display: inline-flex; align-items: center; gap: 0.5rem; }
+  .swatch-line {
+    width: 26px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--agent);
+  }
+  .zoom-hint { color: var(--ink-soft); margin-left: auto; }
+
+  /* Video affiancati */
+  .clips {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 0.5rem 0 0.75rem;
+  }
+  .clip {
+    margin: 0;
+    border: 1px solid var(--rule);
+    border-top: 5px solid var(--agent);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: #000;
+  }
+  .clip figcaption {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    background: var(--panel);
+    padding: 0.5rem 0.75rem;
+    font-weight: 700;
+  }
+  .clip figcaption .note { font-weight: 400; color: var(--ink-soft); font-size: 0.9rem; }
+  .dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--agent);
+    flex: none;
+    align-self: center;
+  }
+  .clip video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+  .clip-wrap { position: relative; }
+  .play-row { margin: 0 0 2rem; }
+
+  .missing-media {
+    display: grid;
+    place-items: center;
+    min-height: 220px;
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    background: repeating-linear-gradient(45deg, var(--neutral), var(--neutral) 10px, #eceff1 10px, #eceff1 20px);
+  }
+  .clip .missing-media { aspect-ratio: 16 / 9; min-height: 0; }
+
+  /* Domande */
+  fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0 0 2rem;
+    min-width: 0;
+  }
+  legend {
+    padding: 0;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+  .hint { color: var(--ink-soft); font-size: 0.95rem; margin: 0 0 0.75rem; }
+  fieldset.need legend::after { content: " *"; color: var(--ink-soft); font-weight: 400; }
+  fieldset.missing {
+    border-left: 4px solid var(--error);
+    padding-left: 1rem;
+    margin-left: -1.25rem;
+  }
+  fieldset.missing legend { color: var(--error); }
+
+  /* Scala a 5 punti: sfuma dal colore dell'agente di sinistra a quello di destra */
+  .scale {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+  }
+  .opt { position: relative; display: block; }
+  .opt input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+  .opt span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    min-height: 4.4rem;
+    padding: 0.5rem 0.4rem;
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.25;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--tint);
+    cursor: pointer;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+  }
+  .opt span b { font-size: 0.95rem; }
+  .opt[data-pos="1"] { --tint: color-mix(in srgb, var(--left) 20%, white); --mark: var(--left); }
+  .opt[data-pos="2"] { --tint: color-mix(in srgb, var(--left) 9%, white); --mark: var(--left); }
+  .opt[data-pos="3"] { --tint: var(--neutral); --mark: var(--ink); }
+  .opt[data-pos="4"] { --tint: color-mix(in srgb, var(--right) 9%, white); --mark: var(--right); }
+  .opt[data-pos="5"] { --tint: color-mix(in srgb, var(--right) 20%, white); --mark: var(--right); }
+  .opt span:hover { border-color: var(--mark); }
+  .opt input:checked + span {
+    border: 2px solid var(--mark);
+    background: color-mix(in srgb, var(--mark) 30%, white);
+    font-weight: 700;
+  }
+  .opt input:focus-visible + span { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .opt[data-pos="3"] input:checked + span { background: #dfe3e6; }
+
+  .choices { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
+  .choice { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; }
+  .choice input { width: 1.1rem; height: 1.1rem; accent-color: var(--ink); margin: 0; }
+
+  textarea {
+    display: block;
+    width: 100%;
+    max-width: var(--col);
+    min-height: 5.5rem;
+    padding: 0.6rem 0.75rem;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--panel);
+    resize: vertical;
+  }
+  textarea:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
+
+  /* Pulsanti */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.9rem;
+    padding: 0.6rem 1.4rem;
+    font: inherit;
+    font-weight: 700;
+    border-radius: var(--radius);
+    border: 2px solid var(--ink);
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--ink); color: #fff; }
+  .btn-primary:hover { background: #2c3746; }
+  .btn-quiet { background: var(--panel); color: var(--ink); }
+  .btn-quiet:hover { background: var(--neutral); }
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .btn[disabled] { opacity: 0.55; cursor: wait; }
+  .btn-play { border-width: 1px; border-color: var(--rule); font-weight: 700; }
+  .play-icon {
+    width: 0;
+    height: 0;
+    border-top: 0.4rem solid transparent;
+    border-bottom: 0.4rem solid transparent;
+    border-left: 0.65rem solid currentColor;
+  }
+  .pause-icon {
+    width: 0.65rem;
+    height: 0.8rem;
+    border-left: 0.22rem solid currentColor;
+    border-right: 0.22rem solid currentColor;
+  }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2.25rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  .nav .spacer { flex: 1; }
+  .form-error {
+    color: var(--error);
+    font-weight: 700;
+    margin: 1rem 0 0;
+  }
+  .notice {
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--ink);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    margin: 1.25rem 0;
+    max-width: var(--col);
+  }
+  .notice.bad { border-left-color: var(--error); }
+  .notice .btn { margin: 0.5rem 0.5rem 0 0; }
+
+  /* Ingrandimento immagine */
+  dialog.zoom {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(20, 26, 34, 0.94);
+  }
+  dialog.zoom::backdrop { background: rgba(20, 26, 34, 0.94); }
+  dialog.zoom img {
+    display: block;
+    width: 100%;
+    height: calc(100vh - 4rem);
+    object-fit: contain;
+  }
+  dialog.zoom .zoom-bar { display: flex; justify-content: flex-end; padding: 0.75rem 1rem; }
+  dialog.zoom .btn { background: #fff; color: var(--ink); border-color: #fff; }
+
+  @media (max-width: 760px) {
+    body { font-size: 1rem; }
+    .sheet { margin: 0; border-radius: 0; border-left: 0; border-right: 0; }
+    .clips { grid-template-columns: 1fr; }
+    .scale { grid-template-columns: 1fr; }
+    .opt span { flex-direction: row; justify-content: flex-start; gap: 0.35rem; min-height: 2.9rem; text-align: left; padding: 0.55rem 0.8rem; }
+    fieldset.missing { margin-left: -0.75rem; padding-left: 0.6rem; }
+    .zoom-hint { margin-left: 0; width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="banner"></div>
+<main class="sheet" id="app" aria-live="polite"></main>
+
+<dialog class="zoom" id="zoom" aria-label="Immagine ingrandita">
+  <div class="zoom-bar"><button class="btn" type="button" id="zoom-close">Chiudi</button></div>
+  <img alt="" id="zoom-img">
+</dialog>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ================================================================
+     CONFIGURAZIONE — l'unica parte da modificare
+     ================================================================ */
+  const CONFIG = {
+    // Indirizzo della Web App di Google Apps Script (vedi ISTRUZIONI.md).
+    // Se resta vuoto il questionario funziona in modalità anteprima e non salva nulla online.
+    scriptUrl: "",
+    // Chi contattare se l'invio non riesce (es. "mario.rossi@campus.unimib.it"). Se vuoto: "chi ti ha inviato il link".
+    contatto: "",
+    minutiStimati: 20,
+    cartellaImmagini: "img/",
+    cartellaVideo: "video/",
+    // Parte 1: configurazioni assegnate a ciascuna versione (numero della configurazione → file c01, c02, ...)
+    fase1: {
+      A: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23],
+      B: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24],
+    },
+    // Parte 2: coppie (a = Agente Verde, b = Agente Arancione) e versione
+    fase2: [
+      { a: 6,  b: 10, versione: "A" },
+      { a: 5,  b: 6,  versione: "B" },
+      { a: 23, b: 24, versione: "A" },
+      { a: 2,  b: 7,  versione: "B" },
+      { a: 22, b: 23, versione: "A" },
+      { a: 19, b: 24, versione: "B" },
+      { a: 8,  b: 10, versione: "A" },
+      { a: 1,  b: 7,  versione: "B" },
+    ],
+    ordineCasuale: true,      // mescola l'ordine dei confronti per ogni persona
+    latiCasualiFase2: true,   // nella Parte 2 decide a caso chi sta a sinistra
+  };
+
+  // I colori devono coincidere con quelli delle linee nelle immagini dei percorsi.
+  const AGENTI = {
+    blu:       { nome: "Agente Blu",       colore: "#1f5fd1" },
+    rosso:     { nome: "Agente Rosso",     colore: "#d62728" },
+    verde:     { nome: "Agente Verde",     colore: "#1d9e75" },
+    arancione: { nome: "Agente Arancione", colore: "#d4915b" },
+  };
+  const NOMI_LINEA = { blu: "Linea blu", rosso: "Linea rossa", verde: "Linea verde", arancione: "Linea arancione" };
+
+  const STORAGE_KEY = "questionario-movimento-v1";
+  const params = new URLSearchParams(location.search);
+  const isTest = params.get("test") === "1";
+  const forcedVersion = (params.get("v") || "").toUpperCase();
+  const $app = document.getElementById("app");
+
+  /* ---------------- utilità ---------------- */
+  const pad = (n) => String(n).padStart(2, "0");
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+  const newId = () => (window.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const el = (tag, attrs = {}, ...children) => {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v === null || v === undefined || v === false) continue;
+      if (k === "class") node.className = v;
+      else if (k === "style") node.setAttribute("style", v);
+      else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+      else node.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of children.flat()) {
+      if (c === null || c === undefined || c === false) continue;
+      node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return node;
+  };
+  const storage = {
+    load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; } },
+    save(s) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (e) { /* non essenziale */ } },
+    clear() { try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* non essenziale */ } },
+  };
+  const fetchTimeout = (url, opts = {}, ms = 15000) => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(t));
+  };
+
+  /* ---------------- stato ---------------- */
+  if (params.get("reset") === "1") storage.clear();
+  let state = storage.load();
+  if (state && state.schema !== 1) state = null;
+
+  function buildItems(version) {
+    const p1 = CONFIG.fase1[version].map((n) => ({
+      fase: 1,
+      id: `p1_c${pad(n)}`,
+      img: `p1_c${pad(n)}.jpg`,
+      A: { code: "ref", agente: "blu" },
+      B: { code: `c${pad(n)}`, agente: "rosso" },
+      aSinistra: true,
+    }));
+    const p2 = CONFIG.fase2.filter((c) => c.versione === version).map((c) => ({
+      fase: 2,
+      id: `p2_c${pad(c.a)}_c${pad(c.b)}`,
+      img: `p2_c${pad(c.a)}_c${pad(c.b)}.jpg`,
+      A: { code: `c${pad(c.a)}`, agente: "verde" },
+      B: { code: `c${pad(c.b)}`, agente: "arancione" },
+      aSinistra: CONFIG.latiCasualiFase2 ? Math.random() < 0.5 : true,
+    }));
+    return {
+      p1: CONFIG.ordineCasuale ? shuffle(p1) : p1,
+      p2: CONFIG.ordineCasuale ? shuffle(p2) : p2,
+    };
+  }
+
+  function newState(version) {
+    return {
+      schema: 1,
+      rid: newId(),
+      versione: version,
+      test: isTest,
+      iniziato: new Date().toISOString(),
+      pagina: 0,
+      items: buildItems(version),
+      risposte: {},
+      extra: { p1Riassunto: null, p1Commento: "", familiarita: "", commentoFinale: "" },
+      inviato: false,
+    };
+  }
+
+  function pages() {
+    if (!state) return [{ t: "intro" }];
+    const list = [{ t: "intro" }, { t: "howto" }, { t: "p1intro" }];
+    state.items.p1.forEach((_, i) => list.push({ t: "item", fase: 1, i }));
+    list.push({ t: "p1summary" }, { t: "p2intro" });
+    state.items.p2.forEach((_, i) => list.push({ t: "item", fase: 2, i }));
+    list.push({ t: "final" }, { t: "thanks" });
+    return list;
+  }
+
+  const save = () => state && storage.save(state);
+
+  /* ---------------- banner ---------------- */
+  function renderBanner() {
+    const b = document.getElementById("banner");
+    b.textContent = "";
+    if (!CONFIG.scriptUrl) {
+      b.append(el("div", { class: "banner" }, "Anteprima: le risposte non vengono salvate online. Inserisci l'indirizzo della Web App in CONFIG.scriptUrl."));
+    } else if (isTest) {
+      b.append(el("div", { class: "banner" }, "Modalità test: le risposte verranno salvate ma segnate come test."));
+    }
+  }
+
+  /* ---------------- navigazione ---------------- */
+  let pageTimer = null; // { id, t0 }
+
+  function stopPageTimer() {
+    if (!pageTimer || !state) return;
+    const r = state.risposte[pageTimer.id];
+    if (r) r.secondi = Math.round((r.secondi || 0) + (Date.now() - pageTimer.t0) / 1000);
+    pageTimer = null;
+    save();
+  }
+
+  function go(index) {
+    stopPageTimer();
+    if (state) { state.pagina = index; save(); }
+    render();
+    window.scrollTo(0, 0);
+    const h = $app.querySelector("h1, h2");
+    if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+  }
+
+  function render() {
+    renderBanner();
+    $app.textContent = "";
+    const list = pages();
+    const idx = state ? Math.min(state.pagina, list.length - 1) : 0;
+    const page = state && state.inviato ? { t: "thanks" } : list[idx];
+    $app.classList.toggle("narrow", page.t !== "item");
+    const views = {
+      intro: viewIntro, howto: viewHowto, p1intro: viewP1Intro, item: viewItem,
+      p1summary: viewP1Summary, p2intro: viewP2Intro, final: viewFinal, thanks: viewThanks,
+    };
+    $app.append(views[page.t](page, idx));
+  }
+
+  function navRow({ back = true, nextLabel = "Avanti", onNext, idx }) {
+    const err = el("p", { class: "form-error", role: "alert", hidden: true }, "Rispondi alle domande evidenziate per continuare.");
+    const row = el("div", { class: "nav" },
+      back ? el("button", { class: "btn btn-quiet", type: "button", onclick: () => go(idx - 1) }, "Indietro") : el("span", { class: "spacer" }),
+      el("button", { class: "btn btn-primary", type: "button", onclick: () => onNext(err) }, nextLabel),
+    );
+    return el("div", {}, err, row);
+  }
+
+  function progress(fase, i, n) {
+    const totale = state.items.p1.length + state.items.p2.length;
+    const fatti = fase === 1 ? i : state.items.p1.length + i;
+    const pct = Math.round((fatti / totale) * 100);
+    return el("div", { class: "progress" },
+      el("div", { class: "progress-meta" },
+        el("span", {}, `Parte ${fase} di 2`),
+        i < n ? el("span", {}, `Confronto ${i + 1} di ${n}`) : el("span", {}, "Riepilogo")),
+      el("div", { class: "progress-track", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Avanzamento" },
+        el("div", { class: "progress-fill", style: `width:${pct}%` })));
+  }
+
+  /* ---------------- componenti ---------------- */
+  // Scala a 5 punti: il valore 1 è sempre il personaggio di sinistra, 5 quello di destra.
+  function scale({ name, legend, hint, left, right, value, onChange, required = true, labels }) {
+    const L = AGENTI[left], R = AGENTI[right];
+    const lab = labels || [
+      ["Decisamente", L.nome], ["Più", L.nome], ["", "Uguali"], ["Più", R.nome], ["Decisamente", R.nome],
+    ];
+    const fs = el("fieldset", { class: required ? "need" : "", "data-name": name, style: `--left:${L.colore};--right:${R.colore}` },
+      el("legend", {}, legend),
+      hint ? el("p", { class: "hint" }, hint) : null,
+      el("div", { class: "scale" },
+        lab.map(([pre, main], k) => {
+          const v = k + 1;
+          const input = el("input", { type: "radio", name, value: String(v), checked: value === v });
+          input.addEventListener("change", () => { fs.classList.remove("missing"); onChange(v); });
+          return el("label", { class: "opt", "data-pos": String(v) },
+            input,
+            el("span", {}, pre ? el("small", {}, pre) : null, el("b", {}, main)));
+        })));
+    return fs;
+  }
+
+  function textArea({ name, legend, hint, value, onChange }) {
+    const id = `ta-${name}`;
+    const ta = el("textarea", { id, name, rows: "3" });
+    ta.value = value || "";
+    ta.addEventListener("input", () => onChange(ta.value));
+    return el("fieldset", {},
+      el("legend", {}, el("label", { for: id }, legend)),
+      hint ? el("p", { class: "hint" }, hint) : null,
+      ta);
+  }
+
+  function mediaMissing(text) {
+    return el("div", { class: "missing-media" }, text);
+  }
+
+  function trajectoryImage(item) {
+    const src = CONFIG.cartellaImmagini + item.img;
+    const img = el("img", { src, alt: "Vista dall'alto dei percorsi dei due personaggi", decoding: "async" });
+    const btn = el("button", { class: "traj", type: "button", "aria-label": "Ingrandisci l'immagine dei percorsi" }, img);
+    img.addEventListener("error", () => btn.replaceWith(mediaMissing(`Immagine non trovata: ${src}`)), { once: true });
+    btn.addEventListener("click", () => openZoom(src));
+    const sx = item.aSinistra ? item.A : item.B;
+    const dx = item.aSinistra ? item.B : item.A;
+    const keyItem = (a) => el("span", { style: `--agent:${AGENTI[a.agente].colore}` },
+      el("i", { class: "swatch-line", "aria-hidden": "true" }), `${NOMI_LINEA[a.agente]}: ${AGENTI[a.agente].nome}`);
+    return el("div", {},
+      btn,
+      el("div", { class: "key" }, keyItem(sx), keyItem(dx), el("span", { class: "zoom-hint small" }, "Clicca sull'immagine per ingrandirla")));
+  }
+
+  function clip(agent, note, onPlay) {
+    const src = CONFIG.cartellaVideo + `${agent.code}.mp4`;
+    const video = el("video", { controls: true, muted: true, playsinline: true, preload: "metadata" });
+    video.muted = true;
+    const source = el("source", { src, type: "video/mp4" });
+    video.append(source);
+    const wrap = el("div", { class: "clip-wrap" }, video);
+    source.addEventListener("error", () => wrap.replaceChildren(mediaMissing(`Video non disponibile: ${src} (file mancante o formato non supportato)`)), { once: true });
+    video.addEventListener("play", onPlay);
+    const fig = el("figure", { class: "clip", style: `--agent:${AGENTI[agent.agente].colore}` },
+      el("figcaption", {}, el("span", { class: "dot", "aria-hidden": "true" }), AGENTI[agent.agente].nome,
+        note ? el("span", { class: "note" }, note) : null),
+      wrap);
+    return { fig, video };
+  }
+
+  function playBoth(videos) {
+    const icon = el("span", { class: "play-icon", "aria-hidden": "true" });
+    const label = el("span", {}, "Riproduci entrambi");
+    const btn = el("button", { class: "btn btn-quiet btn-play", type: "button" }, icon, label);
+    const playing = () => videos.some((v) => v.isConnected && !v.paused && !v.ended);
+    const refresh = () => {
+      const on = playing();
+      icon.className = on ? "pause-icon" : "play-icon";
+      label.textContent = on ? "Metti in pausa" : "Riproduci entrambi";
+    };
+    btn.addEventListener("click", () => {
+      if (playing()) {
+        videos.forEach((v) => v.pause());
+      } else {
+        videos.forEach((v) => {
+          try { v.currentTime = 0; } catch (e) { /* video non caricato */ }
+          const p = v.play();
+          if (p && p.catch) p.catch(() => {});
+        });
+      }
+    });
+    videos.forEach((v) => ["play", "pause", "ended"].forEach((ev) => v.addEventListener(ev, refresh)));
+    return el("div", { class: "play-row" }, btn);
+  }
+
+  /* ---------------- ingrandimento ---------------- */
+  const zoom = document.getElementById("zoom");
+  const zoomImg = document.getElementById("zoom-img");
+  function openZoom(src) {
+    zoomImg.src = src;
+    if (zoom.showModal) zoom.showModal(); else window.open(src, "_blank");
+  }
+  document.getElementById("zoom-close").addEventListener("click", () => zoom.close());
+  zoom.addEventListener("click", (e) => { if (e.target === zoom || e.target === zoomImg) zoom.close(); });
+
+  /* ---------------- pagine ---------------- */
+  function viewIntro(_, idx) {
+    const btn = el("button", { class: "btn btn-primary", type: "button" }, "Inizia");
+    const note = el("p", { class: "muted small", hidden: true });
+    btn.addEventListener("click", async () => {
+      if (state) { go(Math.max(1, idx + 1)); return; }
+      btn.disabled = true;
+      btn.textContent = "Un momento…";
+      const version = await chooseVersion();
+      state = newState(version);
+      save();
+      go(1);
+    });
+    return el("section", { class: "prose" },
+      el("h1", {}, "Come si muovono i personaggi virtuali?"),
+      el("p", {}, "Grazie per partecipare! In questo questionario vedrai brevi video di personaggi virtuali (virtual humans) che camminano nello stesso ambiente, insieme a un'immagine vista dall'alto dei percorsi che hanno seguito."),
+      el("p", {}, "Ti chiediamo di confrontare due personaggi alla volta e di dire quale dei due ti sembra muoversi in modo più naturale."),
+      el("p", {}, `Non ci sono risposte giuste o sbagliate: conta la tua impressione. Il questionario è anonimo e dura circa ${CONFIG.minutiStimati} minuti. Ti consigliamo di compilarlo da computer.`),
+      state && !state.inviato ? el("p", { class: "muted" }, "Hai già iniziato il questionario su questo dispositivo: riprenderai da dove eri rimasto.") : null,
+      el("div", { class: "nav" }, el("span", { class: "spacer" }), btn),
+      note);
+  }
+
+  async function chooseVersion() {
+    if (forcedVersion === "A" || forcedVersion === "B") return forcedVersion;
+    if (CONFIG.scriptUrl) {
+      try {
+        const r = await fetchTimeout(`${CONFIG.scriptUrl}?action=assign`, {}, 8000);
+        const d = await r.json();
+        if (d && (d.version === "A" || d.version === "B")) return d.version;
+      } catch (e) { /* si usa l'assegnazione casuale */ }
+    }
+    return Math.random() < 0.5 ? "A" : "B";
+  }
+
+  function viewHowto(_, idx) {
+    return el("section", { class: "prose" },
+      el("h2", {}, "Come funziona"),
+      el("ul", { class: "steps" },
+        el("li", {}, "Ogni confronto mostra un'immagine dei percorsi e, sotto, due video affiancati."),
+        el("li", {}, "I colori identificano i personaggi: la linea blu nell'immagine e la cornice blu del video sono sempre lo stesso personaggio."),
+        el("li", {}, "Con il pulsante «Riproduci entrambi» fai partire i due video insieme. Puoi rivederli quante volte vuoi."),
+        el("li", {}, "Clicca sull'immagine per vederla a schermo intero."),
+        el("li", {}, "Le domande con l'asterisco (*) sono obbligatorie.")),
+      navRow({ back: false, idx, onNext: () => go(idx + 1) }));
+  }
+
+  function viewP1Intro(_, idx) {
+    return el("section", { class: "prose" },
+      el("h2", {}, "Parte 1 di 2"),
+      el("p", {}, "In questa parte il video a sinistra mostra sempre lo stesso personaggio, l'Agente Blu. Il video a destra mostra ogni volta un personaggio diverso, l'Agente Rosso."),
+      el("p", {}, "Non serve riguardare ogni volta il video dell'Agente Blu: è lì vicino se vuoi confrontarli direttamente."),
+      el("p", { class: "muted" }, `Sono ${state.items.p1.length} confronti.`),
+      navRow({ idx, onNext: () => go(idx + 1) }));
+  }
+
+  function viewP2Intro(_, idx) {
+    return el("section", { class: "prose" },
+      el("h2", {}, "Parte 2 di 2"),
+      el("p", {}, "Ora vedrai coppie di personaggi diversi: cambiano entrambi a ogni confronto."),
+      el("p", {}, "Il colore, verde o arancione, ti dice chi è chi. La loro posizione a sinistra o a destra può cambiare da un confronto all'altro."),
+      el("p", { class: "muted" }, `Sono ${state.items.p2.length} confronti.`),
+      navRow({ idx, onNext: () => go(idx + 1) }));
+  }
+
+  function viewItem(page, idx) {
+    const list = page.fase === 1 ? state.items.p1 : state.items.p2;
+    const item = list[page.i];
+    const r = state.risposte[item.id] || (state.risposte[item.id] = {
+      percorso: null, movimento: null, rotazioni: null, commento: "", secondi: 0, riprSx: 0, riprDx: 0,
+    });
+    pageTimer = { id: item.id, t0: Date.now() };
+    const sx = item.aSinistra ? item.A : item.B;
+    const dx = item.aSinistra ? item.B : item.A;
+    const set = (k) => (v) => { r[k] = v; save(); };
+
+    const left = clip(sx, page.fase === 1 ? "sempre lo stesso" : null, () => { r.riprSx++; save(); });
+    const right = clip(dx, null, () => { r.riprDx++; save(); });
+
+    const q1 = scale({ name: "percorso", left: sx.agente, right: dx.agente, value: r.percorso, onChange: set("percorso"),
+      legend: "1. Guardando l'immagine, quale dei due percorsi ti sembra più naturale?" });
+    const q2 = scale({ name: "movimento", left: sx.agente, right: dx.agente, value: r.movimento, onChange: set("movimento"),
+      legend: "2. Guardando i video, quale dei due personaggi si muove in modo più naturale nel complesso?",
+      hint: "Pensa all'andatura, alla velocità e a come si avvicina agli oggetti e si ferma." });
+    const q3 = scale({ name: "rotazioni", left: sx.agente, right: dx.agente, value: r.rotazioni, onChange: set("rotazioni"),
+      legend: "3. Quale dei due ruota e curva in modo più naturale?" });
+    const q4 = textArea({ name: "commento", value: r.commento, onChange: set("commento"),
+      legend: "4. Hai notato qualcosa in particolare in questo confronto? (facoltativa)" });
+
+    // Precarica l'immagine del confronto successivo
+    const next = list[page.i + 1];
+    if (next) { const pre = new Image(); pre.decoding = "async"; pre.src = CONFIG.cartellaImmagini + next.img; }
+
+    const section = el("section", {},
+      progress(page.fase, page.i, list.length),
+      el("h2", { class: "sr-heading" }, `Confronto ${page.i + 1}`),
+      trajectoryImage(item),
+      q1,
+      el("div", { class: "clips" }, left.fig, right.fig),
+      playBoth([left.video, right.video]),
+      q2, q3, q4,
+      navRow({
+        idx,
+        onNext: (err) => {
+          const missing = [["percorso", q1], ["movimento", q2], ["rotazioni", q3]].filter(([k]) => !r[k]).map(([, fs]) => fs);
+          if (missing.length) return flagMissing(missing, err);
+          go(idx + 1);
+        },
+      }));
+    return section;
+  }
+
+  function flagMissing(fieldsets, err) {
+    fieldsets.forEach((fs) => fs.classList.add("missing"));
+    err.hidden = false;
+    fieldsets[0].scrollIntoView({ block: "center", behavior: "smooth" });
+    const first = fieldsets[0].querySelector("input");
+    if (first) first.focus({ preventScroll: true });
+  }
+
+  function viewP1Summary(_, idx) {
+    const x = state.extra;
+    const q = scale({
+      name: "p1riassunto", left: "blu", right: "rosso", value: x.p1Riassunto,
+      onChange: (v) => { x.p1Riassunto = v; save(); },
+      legend: "Pensando a tutti i confronti che hai appena visto, in generale chi ti è sembrato più naturale?",
+      labels: [["Decisamente", "l'Agente Blu"], ["Più", "l'Agente Blu"], ["", "Uguali"], ["Più", "gli Agenti Rossi"], ["Decisamente", "gli Agenti Rossi"]],
+    });
+    const c = textArea({ name: "p1commento", value: x.p1Commento, onChange: (v) => { x.p1Commento = v; save(); },
+      legend: "Cosa ti ha fatto pensare così? (facoltativa)" });
+    return el("section", {},
+      progress(1, state.items.p1.length, state.items.p1.length),
+      el("h2", {}, "Fine della Parte 1"),
+      q, c,
+      navRow({ idx, onNext: (err) => (x.p1Riassunto ? go(idx + 1) : flagMissing([q], err)) }));
+  }
+
+  function viewFinal(_, idx) {
+    const x = state.extra;
+    const opts = ["Mai o quasi mai", "Qualche volta", "Spesso"];
+    const fam = el("fieldset", {},
+      el("legend", {}, "Quanto ti capita di giocare a videogiochi o usare ambienti 3D? (facoltativa)"),
+      el("div", { class: "choices" }, opts.map((o) => {
+        const input = el("input", { type: "radio", name: "familiarita", value: o, checked: x.familiarita === o });
+        input.addEventListener("change", () => { x.familiarita = o; save(); });
+        return el("label", { class: "choice" }, input, o);
+      })));
+    const c = textArea({ name: "finale", value: x.commentoFinale, onChange: (v) => { x.commentoFinale = v; save(); },
+      legend: "Vuoi aggiungere un commento? (facoltativa)" });
+    const status = el("div", {});
+    const sendBtn = el("button", { class: "btn btn-primary", type: "button" }, "Invia le risposte");
+    sendBtn.addEventListener("click", () => submit(sendBtn, status));
+    return el("section", { class: "prose" },
+      el("h2", {}, "Quasi finito!"),
+      fam, c, status,
+      el("div", { class: "nav" },
+        el("button", { class: "btn btn-quiet", type: "button", onclick: () => go(idx - 1) }, "Indietro"),
+        sendBtn));
+  }
+
+  function viewThanks() {
+    const extra = [];
+    if (state && state.anteprima) {
+      extra.push(el("p", { class: "muted" }, "Anteprima: le risposte non sono state inviate online."),
+        el("button", { class: "btn btn-quiet", type: "button", onclick: downloadAnswers }, "Scarica le risposte"));
+    }
+    return el("section", { class: "prose" },
+      el("h1", {}, "Grazie!"),
+      el("p", {}, "Le tue risposte sono state registrate. Puoi chiudere questa pagina."),
+      extra);
+  }
+
+  /* ---------------- invio ---------------- */
+  function buildPayload() {
+    const pref = (raw, aSinistra) => (raw ? (aSinistra ? raw : 6 - raw) : "");
+    const items = [];
+    ["p1", "p2"].forEach((k) => state.items[k].forEach((it, i) => {
+      const r = state.risposte[it.id] || {};
+      items.push({
+        fase: it.fase,
+        confronto: it.id,
+        ordine: i + 1,
+        agente_A: it.A.code,
+        agente_B: it.B.code,
+        colore_A: it.A.agente,
+        colore_B: it.B.agente,
+        A_a_sinistra: it.aSinistra,
+        // *_prefB: 1 = decisamente A, 3 = uguali, 5 = decisamente B (A = Blu/Verde, B = Rosso/Arancione)
+        percorso_prefB: pref(r.percorso, it.aSinistra),
+        movimento_prefB: pref(r.movimento, it.aSinistra),
+        rotazioni_prefB: pref(r.rotazioni, it.aSinistra),
+        // *_raw: valore cliccato, 1 = personaggio di sinistra
+        percorso_raw: r.percorso || "",
+        movimento_raw: r.movimento || "",
+        rotazioni_raw: r.rotazioni || "",
+        commento: r.commento || "",
+        secondi: r.secondi || 0,
+        riproduzioni_sx: r.riprSx || 0,
+        riproduzioni_dx: r.riprDx || 0,
+      });
+    }));
+    const now = new Date();
+    return {
+      rid: state.rid,
+      versione: state.versione,
+      test: state.test,
+      iniziato_il: state.iniziato,
+      inviato_il: now.toISOString(),
+      durata_min: Math.round((now - new Date(state.iniziato)) / 6000) / 10,
+      fase1_riassunto_prefB: state.extra.p1Riassunto || "",
+      fase1_riassunto_commento: state.extra.p1Commento || "",
+      familiarita_3d: state.extra.familiarita || "",
+      commento_finale: state.extra.commentoFinale || "",
+      schermo: `${window.innerWidth}x${window.innerHeight}`,
+      tocco: window.matchMedia("(pointer: coarse)").matches,
+      items,
+    };
+  }
+
+  async function send(payload) {
+    const body = JSON.stringify(payload);
+    try {
+      // Corpo text/plain: nessuna richiesta preliminare CORS verso Apps Script
+      const r = await fetchTimeout(CONFIG.scriptUrl, { method: "POST", body }, 25000);
+      const d = await r.json();
+      return d && d.ok ? { ok: true } : { ok: false };
+    } catch (e) {
+      // Se la risposta non è leggibile riprova senza leggerla: lo script scarta i doppioni
+      try {
+        await fetchTimeout(CONFIG.scriptUrl, { method: "POST", mode: "no-cors", body }, 25000);
+        return { ok: true, nonConfermato: true };
+      } catch (e2) {
+        return { ok: false };
+      }
+    }
+  }
+
+  async function submit(btn, status) {
+    stopPageTimer();
+    const payload = buildPayload();
+    state.ultimoPayload = payload;
+    save();
+    if (!CONFIG.scriptUrl) {
+      state.inviato = true;
+      state.anteprima = true;
+      save();
+      go(pages().length - 1);
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "Invio in corso…";
+    status.textContent = "";
+    const res = await send(payload);
+    if (res.ok) {
+      state.inviato = true;
+      save();
+      go(pages().length - 1);
+      return;
+    }
+    btn.disabled = false;
+    btn.textContent = "Riprova l'invio";
+    const chi = CONFIG.contatto ? CONFIG.contatto : "chi ti ha inviato il link";
+    status.append(el("div", { class: "notice bad", role: "alert" },
+      el("p", {}, "Non è stato possibile inviare le risposte. Controlla la connessione e riprova."),
+      el("p", {}, `Se il problema continua, scarica il file delle risposte e invialo a ${chi}.`),
+      el("button", { class: "btn btn-quiet", type: "button", onclick: downloadAnswers }, "Scarica le risposte")));
+  }
+
+  function downloadAnswers() {
+    const payload = state.ultimoPayload || buildPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = el("a", { href: url, download: `risposte_${payload.rid.slice(0, 8)}.json` });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  window.addEventListener("pagehide", stopPageTimer);
+  render();
+})();
+</script>
+</body>
+</html>
