@@ -23,7 +23,8 @@
     --error: #b42318;
     --radius: 6px;
     --col: 68ch;
-    --wide: 1120px;
+    --wide: 1920px;   /* pagine dei confronti: quasi tutta la larghezza dello schermo */
+    --testo: 1120px;  /* larghezza massima di domande e scale */
     color-scheme: light;
   }
   * { box-sizing: border-box; }
@@ -50,7 +51,7 @@
     border-bottom: 1px solid #f0dca8;
   }
   .sheet {
-    max-width: var(--wide);
+    width: min(var(--wide), 100% - 2rem);
     margin: 1.5rem auto 3rem;
     background: var(--panel);
     border: 1px solid var(--rule);
@@ -58,7 +59,23 @@
     padding: clamp(1.25rem, 3.5vw, 2.75rem);
   }
   /* Le pagine di solo testo usano un riquadro più stretto */
-  .sheet.narrow { max-width: 780px; }
+  .sheet.narrow { width: min(820px, 100% - 2rem); }
+  .sheet.medium { width: min(1120px, 100% - 2rem); }
+  /* Pagina dello scenario */
+  .scena-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.5rem 0 1.5rem; }
+  .scena-grid > figure:first-child { grid-column: 1 / -1; }   /* la vista d'insieme sopra, i due punti affiancati sotto */
+  .scena-grid:empty { display: none; }
+  figure.scena { margin: 0; }
+  figure.scena figcaption { font-size: 0.9rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  figure.mappa { max-width: 760px; margin: 0.5rem auto 1.5rem; }
+  .fig-zoom { display: block; width: 100%; padding: 0; border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; background: var(--neutral); cursor: zoom-in; }
+  .fig-zoom img { display: block; width: 100%; height: auto; }
+  .fig-zoom:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .promemoria { color: var(--ink-soft); margin: -1.25rem auto 2rem; }
+  .link-btn { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+  /* Nei confronti immagine e video usano tutta la larghezza; domande e scale restano leggibili */
+  section.item > :not(.clips) { max-width: var(--testo); margin-left: auto; margin-right: auto; }
+  section.item > .traj-block { max-width: none; }
   .prose { max-width: var(--col); }
   h1 {
     font-size: clamp(1.75rem, 3.2vw, 2.4rem);
@@ -172,9 +189,11 @@
     flex: none;
     align-self: center;
   }
-  .clip video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+  /* I video sono ritagliati sulla stanza (quasi quadrati): niente bande nere inutili */
+  .clip video { display: block; width: 100%; aspect-ratio: 1 / 1; max-height: 82vh; object-fit: contain; background: #000; }
   .clip-wrap { position: relative; }
   .play-row { margin: 0 0 2rem; }
+  section.item > .play-row, section.item > .promemoria { text-align: center; }
 
   .missing-media {
     display: grid;
@@ -186,7 +205,7 @@
     color: var(--ink-soft);
     background: repeating-linear-gradient(45deg, var(--neutral), var(--neutral) 10px, #eceff1 10px, #eceff1 20px);
   }
-  .clip .missing-media { aspect-ratio: 16 / 9; min-height: 0; }
+  .clip .missing-media { aspect-ratio: 1 / 1; max-height: 82vh; min-height: 0; }
 
   /* Domande */
   fieldset {
@@ -361,6 +380,7 @@
     body { font-size: 1rem; }
     .sheet { margin: 0; border-radius: 0; border-left: 0; border-right: 0; }
     .clips { grid-template-columns: 1fr; }
+    .scena-grid { grid-template-columns: 1fr; }
     .scale { grid-template-columns: 1fr; }
     .opt span { flex-direction: row; justify-content: flex-start; gap: 0.35rem; min-height: 2.9rem; text-align: left; padding: 0.55rem 0.8rem; }
     fieldset.missing { margin-left: -0.75rem; padding-left: 0.6rem; }
@@ -391,7 +411,7 @@
     // Indirizzo della Web App di Google Apps Script (vedi ISTRUZIONI.md).
     // Se resta vuoto il questionario funziona in modalità anteprima e non salva nulla online.
     scriptUrl: "https://script.google.com/macros/s/AKfycbxTpuyFcctr0iRjP0MovCtihs-c9TgBGLFImcjxKYSI3n9AJkkv5c7nia7UOJZJ6San8A/exec",
-    // Chi contattare se l'invio non riesce (es. "mario.rossi@campus.unimib.it"). Se vuoto: "chi ti ha inviato il link".
+    // Chi contattare se l'invio non riesce (es. "mario.rossi@campus.unimib.it"). Se vuoto: "chi ha inviato il link".
     contatto: "g.reaarnez@campus.unimib.it",
     minutiStimati: 40,
     cartellaImmagini: "img/",
@@ -401,7 +421,7 @@
     //   fase1: { A: [1, 3, 5, ...], B: [2, 4, 6, ...] },
     fase1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
     // Parte 2: coppie (a = Agente Verde, b = Agente Arancione). Tutti vedono tutte le 8.
-    // Per dividerle in due versioni aggiungi a ogni coppia  versione: "A"  oppure  versione: "B".
+    // La versione con 4 serie da 8 coppie (una per persona) è in index_4_serie.html.
     fase2: [
       { a: 6,  b: 10 },
       { a: 5,  b: 6  },
@@ -414,6 +434,16 @@
     ],
     ordineCasuale: true,      // mescola l'ordine dei confronti per ogni persona
     latiCasualiFase2: true,   // nella Parte 2 decide a caso chi sta a sinistra
+    // Pagina "Lo scenario": immagini nella cartella img/ (quelle mancanti non vengono mostrate)
+    scenario: {
+      mappa: "scenario_mappa.jpg",            // vista dall'alto con i due punti di sosta cerchiati
+      interni: [                              // screenshot presi dentro la scena, in Unity
+        { file: "scenario_interno_1.jpg", didascalia: "I totem per ordinare: il punto 1 è davanti al totem più a destra" },
+        { file: "scenario_interno_2.jpg", didascalia: "Punto 1: il totem" },
+        { file: "scenario_interno_3.jpg", didascalia: "Punto 2: il monitor degli ordini, sul bancone" },
+      ],
+      sosta: ["circa 2 secondi", "circa 2 secondi"],   // durata prevista della sosta ai punti 1 e 2
+    },
   };
 
   // I colori devono coincidere con quelli delle linee nelle immagini dei percorsi.
@@ -425,7 +455,7 @@
   };
   const NOMI_LINEA = { blu: "Linea blu", rosso: "Linea rossa", verde: "Linea verde", arancione: "Linea arancione" };
 
-  const STORAGE_KEY = "questionario-movimento-v2";
+  const STORAGE_KEY = "questionario-movimento-v3";
   const params = new URLSearchParams(location.search);
   const isTest = params.get("test") === "1";
   const forcedVersion = (params.get("v") || "").toUpperCase();
@@ -475,8 +505,13 @@
   let state = storage.load();
   if (state && state.schema !== 1) state = null;
 
-  // Ci sono due versioni solo se la configurazione le prevede; altrimenti tutti vedono tutto ("unica").
-  const conVersioni = !Array.isArray(CONFIG.fase1) || CONFIG.fase2.some((c) => c.versione);
+  // Versioni previste dalla configurazione (serie della Parte 2 e/o gruppi della Parte 1).
+  // Se non ce ne sono, tutti vedono tutto ("unica").
+  const VERSIONI = [...new Set([
+    ...(Array.isArray(CONFIG.fase1) ? [] : Object.keys(CONFIG.fase1)),
+    ...CONFIG.fase2.map((c) => c.versione).filter(Boolean),
+  ])].sort();
+  const conVersioni = VERSIONI.length > 0;
 
   function buildItems(version) {
     const lista1 = Array.isArray(CONFIG.fase1) ? CONFIG.fase1 : CONFIG.fase1[version];
@@ -519,7 +554,7 @@
 
   function pages() {
     if (!state) return [{ t: "intro" }];
-    const list = [{ t: "intro" }, { t: "howto" }, { t: "p1intro" }];
+    const list = [{ t: "intro" }, { t: "scenario" }, { t: "howto" }, { t: "p1intro" }];
     state.items.p1.forEach((_, i) => list.push({ t: "item", fase: 1, i }));
     list.push({ t: "p1summary" }, { t: "p2intro" });
     state.items.p2.forEach((_, i) => list.push({ t: "item", fase: 2, i }));
@@ -566,16 +601,17 @@
     const list = pages();
     const idx = state ? Math.min(state.pagina, list.length - 1) : 0;
     const page = state && state.inviato ? { t: "thanks" } : list[idx];
-    $app.classList.toggle("narrow", page.t !== "item");
+    $app.classList.toggle("narrow", page.t !== "item" && page.t !== "scenario");
+    $app.classList.toggle("medium", page.t === "scenario");
     const views = {
-      intro: viewIntro, howto: viewHowto, p1intro: viewP1Intro, item: viewItem,
+      intro: viewIntro, scenario: viewScenario, howto: viewHowto, p1intro: viewP1Intro, item: viewItem,
       p1summary: viewP1Summary, p2intro: viewP2Intro, final: viewFinal, thanks: viewThanks,
     };
     $app.append(views[page.t](page, idx));
   }
 
   function navRow({ back = true, nextLabel = "Avanti", onNext, idx }) {
-    const err = el("p", { class: "form-error", role: "alert", hidden: true }, "Rispondi alle domande evidenziate per continuare.");
+    const err = el("p", { class: "form-error", role: "alert", hidden: true }, "Per continuare è necessario rispondere alle domande evidenziate.");
     const row = el("div", { class: "nav" },
       back ? el("button", { class: "btn btn-quiet", type: "button", onclick: () => go(idx - 1) }, "Indietro") : el("span", { class: "spacer" }),
       el("button", { class: "btn btn-primary", type: "button", onclick: () => onNext(err) }, nextLabel),
@@ -642,9 +678,9 @@
     const dx = item.aSinistra ? item.B : item.A;
     const keyItem = (a) => el("span", { style: `--agent:${AGENTI[a.agente].colore}` },
       el("i", { class: "swatch-line", "aria-hidden": "true" }), `${NOMI_LINEA[a.agente]}: ${AGENTI[a.agente].nome}`);
-    return el("div", {},
+    return el("div", { class: "traj-block" },
       btn,
-      el("div", { class: "key" }, keyItem(sx), keyItem(dx), el("span", { class: "zoom-hint small" }, "Clicca sull'immagine per ingrandirla")));
+      el("div", { class: "key" }, keyItem(sx), keyItem(dx), el("span", { class: "zoom-hint small" }, "Fare clic sull’immagine per ingrandirla")));
   }
 
   function clip(agent, note, onPlay) {
@@ -715,36 +751,76 @@
       el("h1", {}, "Come si muovono i personaggi virtuali?"),
       el("p", {}, "Grazie per partecipare!"),
       el("p", {}, "Questo questionario riguarda il movimento di personaggi virtuali. Per ogni confronto verranno mostrati un’immagine dei percorsi visti dall’alto e due brevi video affiancati."),
-      el("p", {}, "Ti verrà chiesto quale dei due personaggi ti sembra più naturale nel percorso, nel movimento complessivo e nei cambi di direzione. Non ci sono risposte giuste o sbagliate: conta la tua impressione."),
+      el("p", {}, "Per ogni confronto verrà chiesto di indicare quale dei due personaggi appare più naturale nel percorso, nel movimento complessivo e nei cambi di direzione. Non esistono risposte giuste o sbagliate: conta l’impressione personale."),
       el("p", {}, `Il questionario è anonimo e la durata stimata è di circa ${CONFIG.minutiStimati} minuti. È consigliabile compilarlo da computer, per osservare meglio immagini e video.`),
       el("p", {}, "È possibile interrompere la compilazione e riprenderla in seguito: riaprendo il link dallo stesso computer e browser, le risposte già inserite saranno conservate."),
-      state && !state.inviato ? el("p", { class: "muted" }, "Hai già iniziato il questionario su questo dispositivo: riprenderai da dove eri rimasto.") : null,
+      state && !state.inviato ? el("p", { class: "muted" }, "Il questionario risulta già iniziato su questo dispositivo: la compilazione riprenderà dal punto in cui era stata interrotta.") : null,
       el("div", { class: "nav" }, el("span", { class: "spacer" }), btn),
       note);
   }
 
   async function chooseVersion() {
     if (!conVersioni) return "unica";
-    if (forcedVersion === "A" || forcedVersion === "B") return forcedVersion;
+    if (VERSIONI.includes(forcedVersion)) return forcedVersion;
     if (CONFIG.scriptUrl) {
       try {
-        const r = await fetchTimeout(`${CONFIG.scriptUrl}?action=assign`, {}, 8000);
+        const url = `${CONFIG.scriptUrl}?action=assign&versioni=${VERSIONI.join(",")}`;
+        const r = await fetchTimeout(url, {}, 8000);
         const d = await r.json();
-        if (d && (d.version === "A" || d.version === "B")) return d.version;
+        // schema 2 = script aggiornato, che conosce tutte le versioni
+        if (d && d.schema === 2 && VERSIONI.includes(d.version)) return d.version;
       } catch (e) { /* si usa l'assegnazione casuale */ }
     }
-    return Math.random() < 0.5 ? "A" : "B";
+    return VERSIONI[Math.floor(Math.random() * VERSIONI.length)];
+  }
+
+  // Immagine che scompare se il file non c'è (gli screenshot dall'interno sono facoltativi)
+  function figura(file, didascalia, cls) {
+    const src = CONFIG.cartellaImmagini + file;
+    const img = el("img", { src, alt: didascalia, decoding: "async" });
+    const btn = el("button", { class: "fig-zoom", type: "button", "aria-label": `Ingrandisci: ${didascalia}` }, img);
+    btn.addEventListener("click", () => openZoom(src));
+    const fig = el("figure", { class: cls || "scena" }, btn, el("figcaption", {}, didascalia));
+    img.addEventListener("error", () => fig.remove(), { once: true });
+    return fig;
+  }
+
+  function viewScenario(_, idx) {
+    const sc = CONFIG.scenario;
+    return el("section", {},
+      el("h2", {}, "Lo scenario"),
+      el("div", { class: "prose" },
+        el("p", {}, "I video mostrano dall’alto l’interno di un fast-food. In ogni video un personaggio virtuale compie lo stesso percorso: dal punto di partenza va a uno dei totem per ordinare (punto 1), poi davanti al monitor degli ordini, sul bancone (punto 2), e prosegue fino al punto di arrivo."),
+      ),
+      el("div", { class: "scena-grid" }, sc.interni.map((f) => figura(f.file, f.didascalia))),
+      el("div", { class: "prose" },
+        el("p", {}, "Lungo il percorso il personaggio deve fermarsi in due punti, cerchiati nell’immagine qui sotto:"),
+        el("ul", { class: "steps" },
+          el("li", {}, el("b", {}, "Punto 1, davanti al totem: "), `sosta di ${sc.sosta[0]};`),
+          el("li", {}, el("b", {}, "Punto 2, davanti al monitor degli ordini: "), `sosta di ${sc.sosta[1]}.`)),
+        el("p", {}, "Al di fuori di questi due punti non sono previste soste."),
+      ),
+      figura(sc.mappa, "Vista dall’alto, la stessa dei video: i cerchi indicano i due punti di sosta.", "scena mappa"),
+      navRow({ idx, onNext: () => go(idx + 1) }));
+  }
+
+  function promemoriaSoste() {
+    const sc = CONFIG.scenario;
+    const btn = el("button", { class: "link-btn", type: "button" }, "rivedi la mappa");
+    btn.addEventListener("click", () => openZoom(CONFIG.cartellaImmagini + sc.mappa));
+    return el("p", { class: "promemoria small" },
+      `Soste previste: punto 1 (totem) ${sc.sosta[0]}, punto 2 (monitor) ${sc.sosta[1]} — `, btn, ".");
   }
 
   function viewHowto(_, idx) {
     return el("section", { class: "prose" },
       el("h2", {}, "Come funziona"),
       el("ul", { class: "steps" },
-        el("li", {}, "Per ogni confronto, osserva prima l’immagine dei percorsi e rispondi alla domanda corrispondente. Poi guarda i due video e rispondi alle domande sul movimento."),
+        el("li", {}, "Ogni confronto prevede prima l’osservazione dell’immagine dei percorsi, con la relativa domanda, e poi la visione dei due video, con le domande sul movimento."),
         el("li", {}, "I colori identificano i personaggi: ogni linea nell’immagine corrisponde al personaggio mostrato nel video con la cornice dello stesso colore."),
         el("li", {}, "Cliccando sull’immagine è possibile ingrandirla."),
         el("li", {}, "Il pulsante «Riproduci entrambi» avvia i due video contemporaneamente. È possibile rivederli quante volte si desidera."),
-        el("li", {}, "Le domande contrassegnate con un asterisco (*) sono obbligatorie. I commenti sono facoltativi.")),
+        el("li", {}, "Le domande contrassegnate con un asterisco (*) sono obbligatorie; i commenti sono facoltativi.")),
       navRow({ back: false, idx, onNext: () => go(idx + 1) }));
   }
 
@@ -762,7 +838,7 @@
     return el("section", { class: "prose" },
       el("h2", {}, "Parte 2 di 2"),
       el("p", {}, "Questa parte comprende 8 confronti. Entrambi i video cambiano a ogni confronto."),
-      el("p", {}, "I personaggi sono identificati dai colori verde e arancione. La loro posizione a sinistra o a destra può variare: per riconoscerli, fai riferimento al colore delle linee nell’immagine e delle cornici dei video."),
+      el("p", {}, "I personaggi sono identificati dai colori verde e arancione. La loro posizione a sinistra o a destra può variare: per riconoscerli occorre fare riferimento al colore delle linee nell’immagine e delle cornici dei video."),
       el("p", {}, "Anche in questa parte, le domande riguardano separatamente i percorsi, il movimento complessivo e i cambi di direzione."),
       //el("p", { class: "muted" }, `Sono ${state.items.p2.length} confronti.`),
       navRow({ idx, onNext: () => go(idx + 1) }));
@@ -783,26 +859,27 @@
     const right = clip(dx, null, () => { r.riprDx++; save(); });
 
     const q1 = scale({ name: "percorso", left: sx.agente, right: dx.agente, value: r.percorso, onChange: set("percorso"),
-      legend: "1. Guardando l'immagine, quale dei due percorsi ti sembra più naturale?" });
+      legend: "1. In base all’immagine, quale dei due percorsi appare più naturale?" });
     const q2 = scale({ name: "movimento", left: sx.agente, right: dx.agente, value: r.movimento, onChange: set("movimento"),
-      legend: "2. Guardando i video, quale dei due personaggi si muove in modo più naturale nel complesso?",
-      hint: "Pensa all'andatura, alla velocità e a come si avvicina agli oggetti e si ferma." });
+      legend: "2. In base ai video, quale dei due personaggi si muove in modo più naturale nel complesso?",
+      hint: "Aspetti da considerare: l’andatura, la velocità, il modo di avvicinarsi agli oggetti e di fermarsi." });
     const q3 = scale({ name: "rotazioni", left: sx.agente, right: dx.agente, value: r.rotazioni, onChange: set("rotazioni"),
-      legend: "3. Quale dei due ruota e curva in modo più naturale?" });
+      legend: "3. Quale dei due personaggi ruota e curva in modo più naturale?" });
     const q4 = textArea({ name: "commento", value: r.commento, onChange: set("commento"),
-      legend: "4. Hai notato qualcosa in particolare in questo confronto? (facoltativa)" });
+      legend: "4. Eventuali osservazioni su questo confronto (facoltativa)" });
 
     // Precarica l'immagine del confronto successivo
     const next = list[page.i + 1];
     if (next) { const pre = new Image(); pre.decoding = "async"; pre.src = CONFIG.cartellaImmagini + next.img; }
 
-    const section = el("section", {},
+    const section = el("section", { class: "item" },
       progress(page.fase, page.i, list.length),
       el("h2", { class: "sr-heading" }, `Confronto ${page.i + 1}`),
       trajectoryImage(item),
       q1,
       el("div", { class: "clips" }, left.fig, right.fig),
       playBoth([left.video, right.video]),
+      promemoriaSoste(),
       q2, q3, q4,
       navRow({
         idx,
@@ -828,11 +905,11 @@
     const q = scale({
       name: "p1riassunto", left: "blu", right: "rosso", value: x.p1Riassunto,
       onChange: (v) => { x.p1Riassunto = v; save(); },
-      legend: "Pensando a tutti i confronti che hai appena visto, in generale chi ti è sembrato più naturale?",
+      legend: "Considerando nel complesso i confronti appena visti, quale personaggio è apparso più naturale?",
       labels: [["Decisamente", "l'Agente Blu"], ["Più", "l'Agente Blu"], ["", "Uguali"], ["Più", "gli Agenti Rossi"], ["Decisamente", "gli Agenti Rossi"]],
     });
     const c = textArea({ name: "p1commento", value: x.p1Commento, onChange: (v) => { x.p1Commento = v; save(); },
-      legend: "Quali aspetti hanno influito maggiormente sulla tua risposta? (facoltativa)" });
+      legend: "Quali aspetti hanno influito maggiormente su questa risposta? (facoltativa)" });
     return el("section", {},
       progress(1, state.items.p1.length, state.items.p1.length),
       el("h2", {}, "Fine della Parte 1"),
@@ -844,14 +921,14 @@
     const x = state.extra;
     const opts = ["Mai o quasi mai", "Qualche volta", "Spesso"];
     const fam = el("fieldset", {},
-      el("legend", {}, "Con quale frequenza giochi ai videogiochi o utilizzi ambienti virtuali 3D? (facoltativa)"),
+      el("legend", {}, "Frequenza di utilizzo di videogiochi o ambienti virtuali 3D (facoltativa)"),
       el("div", { class: "choices" }, opts.map((o) => {
         const input = el("input", { type: "radio", name: "familiarita", value: o, checked: x.familiarita === o });
         input.addEventListener("change", () => { x.familiarita = o; save(); });
         return el("label", { class: "choice" }, input, o);
       })));
     const c = textArea({ name: "finale", value: x.commentoFinale, onChange: (v) => { x.commentoFinale = v; save(); },
-      legend: "Vuoi aggiungere un commento? (facoltativa)" });
+      legend: "Eventuali commenti finali (facoltativa)" });
     const status = el("div", {});
     const sendBtn = el("button", { class: "btn btn-primary", type: "button" }, "Invia le risposte");
     sendBtn.addEventListener("click", () => submit(sendBtn, status));
@@ -871,7 +948,7 @@
     }
     return el("section", { class: "prose" },
       el("h1", {}, "Grazie!"),
-      el("p", {}, "Le tue risposte sono state registrate. Puoi chiudere questa pagina."),
+      el("p", {}, "Le risposte sono state registrate. È possibile chiudere questa pagina."),
       extra);
   }
 
@@ -964,10 +1041,10 @@
     }
     btn.disabled = false;
     btn.textContent = "Riprova l'invio";
-    const chi = CONFIG.contatto ? CONFIG.contatto : "chi ti ha inviato il link";
+    const chi = CONFIG.contatto ? CONFIG.contatto : "chi ha inviato il link";
     status.append(el("div", { class: "notice bad", role: "alert" },
-      el("p", {}, "Non è stato possibile inviare le risposte. Controlla la connessione e riprova."),
-      el("p", {}, `Se il problema continua, scarica il file delle risposte e invialo a ${chi}.`),
+      el("p", {}, "Non è stato possibile inviare le risposte. Verificare la connessione e riprovare."),
+      el("p", {}, `Se il problema persiste, scaricare il file delle risposte e inviarlo a ${chi}.`),
       el("button", { class: "btn btn-quiet", type: "button", onclick: downloadAnswers }, "Scarica le risposte")));
   }
 
