@@ -417,24 +417,22 @@
     cartellaImmagini: "img/",
     cartellaVideo: "video/",
     // Parte 1: configurazioni da confrontare con l'Agente Blu (numero → file c01, c02, ...).
-    // Due blocchi da 12, bilanciati per rapporto TZ/WZ, angularSpeed, warningSpeedMultiplier e tempo medio:
-    // ogni persona riceve un blocco, assegnato in modo alternato (serve apps_script.gs aggiornato).
-    // Per far vedere a tutti le stesse configurazioni scrivi una lista semplice, es. fase1: [1, 2, 3, ...],
+    // 21 configurazioni (escluse 14, 22 e 24) in due blocchi da 11 e 10.
+    // Ogni persona riceve un blocco, assegnato in modo alternato da apps_script.gs.
     fase1: {
-      A: [1, 2, 3, 6, 11, 13, 15, 16, 17, 18, 21, 24],
-      B: [4, 5, 7, 8, 9, 10, 12, 14, 19, 20, 22, 23],
+      A: [1, 6, 7, 8, 10, 12, 15, 16, 17, 19, 20],
+      B: [2, 3, 4, 5, 9, 11, 13, 18, 21, 23],
     },
     // Parte 2: coppie (a = Agente Verde, b = Agente Arancione). Tutti vedono tutte le 8.
-    // La versione con 4 serie da 8 coppie (una per persona) è in index_4_serie.html.
     fase2: [
       { a: 6,  b: 10 },
       { a: 5,  b: 6  },
-      { a: 23, b: 24 },
       { a: 2,  b: 7  },
-      { a: 22, b: 23 },
-      { a: 19, b: 24 },
       { a: 8,  b: 10 },
       { a: 1,  b: 7  },
+      { a: 9,  b: 23 },
+      { a: 2,  b: 18 },
+      { a: 1,  b: 12 },
     ],
     ordineCasuale: true,      // mescola l'ordine dei confronti per ogni persona
     latiCasualiFase2: true,   // nella Parte 2 decide a caso chi sta a sinistra
@@ -825,7 +823,7 @@
         el("li", {}, "Cliccando sull’immagine è possibile ingrandirla."),
         el("li", {}, "Il pulsante «Riproduci entrambi» avvia i due video contemporaneamente. È possibile rivederli quante volte si desidera."),
         el("li", {}, "Le domande contrassegnate con un asterisco (*) sono obbligatorie; i commenti sono facoltativi.")),
-      navRow({ back: false, idx, onNext: () => go(idx + 1) }));
+      navRow({ idx, onNext: () => go(idx + 1) }));
   }
 
   function viewP1Intro(_, idx) {
