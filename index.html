@@ -276,6 +276,15 @@
   .opt[data-pos="3"] input:checked + span { background: #dfe3e6; }
 
   .choices { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
+  /* Scale di accordo per la valutazione del questionario: colori neutri */
+  .likert { display: grid; gap: 0.35rem; margin-top: 0.6rem; }
+  .likert.n3 { grid-template-columns: repeat(3, 1fr); }
+  .likert.n5 { grid-template-columns: repeat(5, 1fr); }
+  .likert .opt span { background: var(--neutral); }
+  .likert .opt span:hover { border-color: var(--ink); }
+  .likert .opt input:checked + span { border: 2px solid var(--ink); background: #dfe3e6; font-weight: 700; }
+  .blocco-valutazione { border-top: 1px solid var(--rule); padding-top: 1.5rem; margin-top: 0.5rem; }
+  h3 { font-size: 1.15rem; line-height: 1.3; margin: 0 0 0.5rem; }
   .choice { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; }
   .choice input { width: 1.1rem; height: 1.1rem; accent-color: var(--ink); margin: 0; }
 
@@ -382,6 +391,7 @@
     .clips { grid-template-columns: 1fr; }
     .scena-grid { grid-template-columns: 1fr; }
     .scale { grid-template-columns: 1fr; }
+    .likert.n3, .likert.n5 { grid-template-columns: 1fr; }
     .opt span { flex-direction: row; justify-content: flex-start; gap: 0.35rem; min-height: 2.9rem; text-align: left; padding: 0.55rem 0.8rem; }
     fieldset.missing { margin-left: -0.75rem; padding-left: 0.6rem; }
     .zoom-hint { margin-left: 0; width: 100%; }
@@ -561,7 +571,7 @@
     state.items.p1.forEach((_, i) => list.push({ t: "item", fase: 1, i }));
     list.push({ t: "p1summary" }, { t: "p2intro" });
     state.items.p2.forEach((_, i) => list.push({ t: "item", fase: 2, i }));
-    list.push({ t: "final" }, { t: "thanks" });
+    list.push({ t: "p2summary" }, { t: "valutazione" }, { t: "final" }, { t: "thanks" });
     return list;
   }
 
@@ -608,7 +618,8 @@
     $app.classList.toggle("medium", page.t === "scenario");
     const views = {
       intro: viewIntro, scenario: viewScenario, howto: viewHowto, p1intro: viewP1Intro, item: viewItem,
-      p1summary: viewP1Summary, p2intro: viewP2Intro, final: viewFinal, thanks: viewThanks,
+      p1summary: viewP1Summary, p2intro: viewP2Intro, p2summary: viewP2Summary, valutazione: viewValutazione,
+      final: viewFinal, thanks: viewThanks,
     };
     $app.append(views[page.t](page, idx));
   }
@@ -654,6 +665,59 @@
             el("span", {}, pre ? el("small", {}, pre) : null, el("b", {}, main)));
         })));
     return fs;
+  }
+
+  // Valutazione del questionario: scale di accordo (1 = per niente, 5 = del tutto) e durata (1 = troppo breve, 3 = troppo lunga)
+  const ACCORDO = ["Per niente d’accordo", "Poco d’accordo", "Né d’accordo né in disaccordo", "D’accordo", "Del tutto d’accordo"];
+  const DURATA = ["Troppo breve", "Adeguata", "Troppo lunga"];
+  const GIUDIZIO = ["Molto negativa", "Negativa", "Né positiva né negativa", "Positiva", "Molto positiva"];
+  const CAMPI_VALUTAZIONE = [
+    "p1_istruzioni", "p1_domande", "p1_scala", "p1_durata",
+    "p2_istruzioni", "p2_domande", "p2_scala", "p2_durata",
+    "scopo_chiaro", "scenario_chiaro", "video_chiari", "vista_alto", "altra_vista", "giudizio_complessivo", "altri_compiti",
+  ];
+  const val = () => state.extra.valutazione || (state.extra.valutazione = {});
+
+  function likert({ name, legend, hint, labels = ACCORDO, value, onChange, required = true }) {
+    const fs = el("fieldset", { class: required ? "need" : "", "data-name": name },
+      el("legend", {}, legend),
+      hint ? el("p", { class: "hint" }, hint) : null,
+      el("div", { class: `likert n${labels.length}` },
+        labels.map((lab, k) => {
+          const v = k + 1;
+          const input = el("input", { type: "radio", name, value: String(v), checked: value === v });
+          input.addEventListener("change", () => { fs.classList.remove("missing"); onChange(v); });
+          return el("label", { class: "opt" }, input, el("span", {}, lab));
+        })));
+    return fs;
+  }
+
+  function scelta({ name, legend, options, value, onChange, required = true }) {
+    const fs = el("fieldset", { class: required ? "need" : "", "data-name": name },
+      el("legend", {}, legend),
+      el("div", { class: "choices" }, options.map((o) => {
+        const input = el("input", { type: "radio", name, value: o, checked: value === o });
+        input.addEventListener("change", () => { fs.classList.remove("missing"); onChange(o); });
+        return el("label", { class: "choice" }, input, o);
+      })));
+    return fs;
+  }
+
+  // Domande di valutazione di una parte, poste alla fine della parte stessa
+  function domandeParte(n) {
+    const v = val();
+    const chiave = (c) => `p${n}_${c}`;
+    const set = (c) => (x) => { v[chiave(c)] = x; save(); };
+    const domande = [
+      ["istruzioni", `Le istruzioni della Parte ${n} erano chiare.`, ACCORDO],
+      ["domande", "Le domande di ogni confronto erano chiare.", ACCORDO],
+      ["scala", "La scala di risposta permetteva di esprimere bene la propria valutazione.", ACCORDO],
+      ["durata", `La durata della Parte ${n} è stata:`, DURATA],
+    ];
+    const fieldset = domande.map(([c, legend, labels]) =>
+      likert({ name: chiave(c), legend, labels, value: v[chiave(c)], onChange: set(c) }));
+    const mancanti = () => fieldset.filter((_, i) => !v[chiave(domande[i][0])]);
+    return { fieldset, mancanti };
   }
 
   function textArea({ name, legend, hint, value, onChange }) {
@@ -755,6 +819,7 @@
       el("p", {}, "Grazie per partecipare!"),
       el("p", {}, "Questo questionario riguarda il movimento di personaggi virtuali. Per ogni confronto verranno mostrati un’immagine dei percorsi visti dall’alto e due brevi video affiancati."),
       el("p", {}, "Per ogni confronto verrà chiesto di indicare quale dei due personaggi appare più naturale nel percorso, nel movimento complessivo e nei cambi di direzione. Non esistono risposte giuste o sbagliate: conta l’impressione personale."),
+      el("p", {}, "Alla fine di ciascuna parte e al termine del questionario sono presenti alcune brevi domande sul questionario stesso."),
       el("p", {}, `Il questionario è anonimo e la durata stimata è di circa ${CONFIG.minutiStimati} minuti. È consigliabile compilarlo da computer, per osservare meglio immagini e video.`),
       el("p", {}, "È possibile interrompere la compilazione e riprenderla in seguito: riaprendo il link dallo stesso computer e browser, le risposte già inserite saranno conservate."),
       state && !state.inviato ? el("p", { class: "muted" }, "Il questionario risulta già iniziato su questo dispositivo: la compilazione riprenderà dal punto in cui era stata interrotta.") : null,
@@ -913,11 +978,65 @@
     });
     const c = textArea({ name: "p1commento", value: x.p1Commento, onChange: (v) => { x.p1Commento = v; save(); },
       legend: "Quali aspetti hanno influito maggiormente su questa risposta? (facoltativa)" });
+    const d = domandeParte(1);
     return el("section", {},
       progress(1, state.items.p1.length, state.items.p1.length),
       el("h2", {}, "Fine della Parte 1"),
       q, c,
-      navRow({ idx, onNext: (err) => (x.p1Riassunto ? go(idx + 1) : flagMissing([q], err)) }));
+      el("div", { class: "blocco-valutazione" },
+        el("h3", {}, "Valutazione della Parte 1"),
+        el("p", { class: "hint" }, "Queste domande riguardano il questionario, non i personaggi."),
+        d.fieldset),
+      navRow({ idx, onNext: (err) => {
+        const mancanti = (x.p1Riassunto ? [] : [q]).concat(d.mancanti());
+        return mancanti.length ? flagMissing(mancanti, err) : go(idx + 1);
+      } }));
+  }
+
+  function viewP2Summary(_, idx) {
+    const d = domandeParte(2);
+    return el("section", {},
+      progress(2, state.items.p2.length, state.items.p2.length),
+      el("h2", {}, "Fine della Parte 2"),
+      el("h3", {}, "Valutazione della Parte 2"),
+      el("p", { class: "hint" }, "Queste domande riguardano il questionario, non i personaggi."),
+      d.fieldset,
+      navRow({ idx, onNext: (err) => {
+        const mancanti = d.mancanti();
+        return mancanti.length ? flagMissing(mancanti, err) : go(idx + 1);
+      } }));
+  }
+
+  function viewValutazione(_, idx) {
+    const v = val();
+    const set = (c) => (x) => { v[c] = x; save(); };
+    const obbligatorie = [
+      ["scopo_chiaro", likert({ name: "scopo_chiaro", legend: "Lo scopo del questionario era chiaro.",
+        value: v.scopo_chiaro, onChange: set("scopo_chiaro") })],
+      ["scenario_chiaro", likert({ name: "scenario_chiaro", legend: "La descrizione dello scenario (il fast-food, i punti di sosta e la mappa) era chiara.",
+        value: v.scenario_chiaro, onChange: set("scenario_chiaro") })],
+      ["video_chiari", likert({ name: "video_chiari", legend: "Nei video il movimento dei personaggi si vedeva chiaramente.",
+        value: v.video_chiari, onChange: set("video_chiari") })],
+      ["vista_alto", likert({ name: "vista_alto", legend: "La ripresa dall’alto era adatta a valutare il movimento.",
+        value: v.vista_alto, onChange: set("vista_alto") })],
+      ["altra_vista", scelta({ name: "altra_vista", legend: "Un’altra inquadratura sarebbe stata più utile?",
+        options: ["No, la vista dall’alto è sufficiente", "Sì, ad altezza d’occhi, come una persona presente nella scena",
+          "Sì, una vista obliqua o laterale", "Non saprei"],
+        value: v.altra_vista, onChange: set("altra_vista") })],
+      ["giudizio_complessivo", likert({ name: "giudizio_complessivo", legend: "Valutazione complessiva del questionario",
+        labels: GIUDIZIO, value: v.giudizio_complessivo, onChange: set("giudizio_complessivo") })],
+    ];
+    const altri = textArea({ name: "altri_compiti", value: v.altri_compiti || "", onChange: set("altri_compiti"),
+      legend: "Ci sono altri compiti o confronti che sarebbe stato utile svolgere? (facoltativa)" });
+    return el("section", {},
+      el("h2", {}, "Valutazione del questionario"),
+      el("p", { class: "hint" }, "Le ultime domande riguardano il questionario nel suo insieme e servono a migliorarlo."),
+      obbligatorie.map(([, fs]) => fs),
+      altri,
+      navRow({ idx, onNext: (err) => {
+        const mancanti = obbligatorie.filter(([k]) => !v[k]).map(([, fs]) => fs);
+        return mancanti.length ? flagMissing(mancanti, err) : go(idx + 1);
+      } }));
   }
 
   function viewFinal(_, idx) {
@@ -931,7 +1050,7 @@
         return el("label", { class: "choice" }, input, o);
       })));
     const c = textArea({ name: "finale", value: x.commentoFinale, onChange: (v) => { x.commentoFinale = v; save(); },
-      legend: "Eventuali commenti finali (facoltativa)" });
+      legend: "Eventuali altri commenti o suggerimenti sul questionario (facoltativa)" });
     const status = el("div", {});
     const sendBtn = el("button", { class: "btn btn-primary", type: "button" }, "Invia le risposte");
     sendBtn.addEventListener("click", () => submit(sendBtn, status));
@@ -985,7 +1104,7 @@
       });
     }));
     const now = new Date();
-    return {
+    const out = {
       rid: state.rid,
       versione: state.versione,
       test: state.test,
@@ -1000,6 +1119,10 @@
       tocco: window.matchMedia("(pointer: coarse)").matches,
       items,
     };
+    // Valutazione del questionario: accordo 1-5, durata 1-3 (1 = troppo breve), giudizio 1-5
+    const v = state.extra.valutazione || {};
+    CAMPI_VALUTAZIONE.forEach((c) => { out[c] = v[c] === undefined || v[c] === null ? "" : v[c]; });
+    return out;
   }
 
   async function send(payload) {
