@@ -646,7 +646,7 @@
   }
 
   /* ---------------- componenti ---------------- */
-  // Scala a 5 punti: il valore 1 è sempre il personaggio di sinistra, 5 quello di destra.
+  // Scala a 5 punti: il valore 1 è sempre l’agente di sinistra, 5 quello di destra.
   function scale({ name, legend, hint, left, right, value, onChange, required = true, labels }) {
     const L = AGENTI[left], R = AGENTI[right];
     const lab = labels || [
@@ -675,6 +675,7 @@
     "p1_istruzioni", "p1_domande", "p1_scala", "p1_durata",
     "p2_istruzioni", "p2_domande", "p2_scala", "p2_durata",
     "scopo_chiaro", "scenario_chiaro", "video_chiari", "vista_alto", "altra_vista", "giudizio_complessivo", "altri_compiti",
+    "opinioni_esperimento",
   ];
   const val = () => state.extra.valutazione || (state.extra.valutazione = {});
 
@@ -737,7 +738,7 @@
 
   function trajectoryImage(item) {
     const src = CONFIG.cartellaImmagini + item.img;
-    const img = el("img", { src, alt: "Vista dall'alto dei percorsi dei due personaggi", decoding: "async" });
+    const img = el("img", { src, alt: "Vista dall'alto dei percorsi dei due agenti", decoding: "async" });
     const btn = el("button", { class: "traj", type: "button", "aria-label": "Ingrandisci l'immagine dei percorsi" }, img);
     img.addEventListener("error", () => btn.replaceWith(mediaMissing(`Immagine non trovata: ${src}`)), { once: true });
     btn.addEventListener("click", () => openZoom(src));
@@ -815,10 +816,10 @@
       go(1);
     });
     return el("section", { class: "prose" },
-      el("h1", {}, "Come si muovono i personaggi virtuali?"),
+      el("h1", {}, "Come si muovono gli agenti virtuali?"),
       el("p", {}, "Grazie per partecipare!"),
-      el("p", {}, "Questo questionario riguarda il movimento di personaggi virtuali. Per ogni confronto verranno mostrati un’immagine dei percorsi visti dall’alto e due brevi video affiancati."),
-      el("p", {}, "Per ogni confronto verrà chiesto di indicare quale dei due personaggi appare più naturale nel percorso, nel movimento complessivo e nei cambi di direzione. Non esistono risposte giuste o sbagliate: conta l’impressione personale."),
+      el("p", {}, "Questo questionario riguarda il movimento di agenti virtuali. Per ogni confronto verranno mostrati un’immagine dei percorsi visti dall’alto e due brevi video affiancati."),
+      el("p", {}, "Per ogni confronto verrà chiesto di indicare quale dei due agenti appare più naturale nel percorso, nel movimento complessivo e nei cambi di direzione. Non esistono risposte giuste o sbagliate: conta l’impressione personale."),
       el("p", {}, "Alla fine di ciascuna parte e al termine del questionario sono presenti alcune brevi domande sul questionario stesso."),
       el("p", {}, `Il questionario è anonimo e la durata stimata è di circa ${CONFIG.minutiStimati} minuti. È consigliabile compilarlo da computer, per osservare meglio immagini e video.`),
       el("p", {}, "È possibile interrompere la compilazione e riprenderla in seguito: riaprendo il link dallo stesso computer e browser, le risposte già inserite saranno conservate."),
@@ -858,11 +859,11 @@
     return el("section", {},
       el("h2", {}, "Lo scenario"),
       el("div", { class: "prose" },
-        el("p", {}, "I video mostrano dall’alto l’interno di un fast-food. In ogni video un personaggio virtuale compie lo stesso percorso: dal punto di partenza va a uno dei totem per ordinare (punto 1), poi davanti al monitor degli ordini, sul bancone (punto 2), e prosegue fino al punto di arrivo."),
+        el("p", {}, "I video mostrano dall’alto l’interno di un fast-food. In ogni video un agente virtuale compie lo stesso percorso: dal punto di partenza va a uno dei totem per ordinare (punto 1), poi davanti al monitor degli ordini, sul bancone (punto 2), e prosegue fino al punto di arrivo."),
       ),
       el("div", { class: "scena-grid" }, sc.interni.map((f) => figura(f.file, f.didascalia))),
       el("div", { class: "prose" },
-        el("p", {}, "Lungo il percorso il personaggio deve fermarsi in due punti, cerchiati nell’immagine qui sotto:"),
+        el("p", {}, "Lungo il percorso l’agente deve fermarsi in due punti, cerchiati nell’immagine qui sotto:"),
         el("ul", { class: "steps" },
           el("li", {}, el("b", {}, "Punto 1, davanti al totem: "), `sosta di ${sc.sosta[0]};`),
           el("li", {}, el("b", {}, "Punto 2, davanti al monitor degli ordini: "), `sosta di ${sc.sosta[1]}.`)),
@@ -885,7 +886,7 @@
       el("h2", {}, "Come funziona"),
       el("ul", { class: "steps" },
         el("li", {}, "Ogni confronto prevede prima l’osservazione dell’immagine dei percorsi, con la relativa domanda, e poi la visione dei due video, con le domande sul movimento."),
-        el("li", {}, "I colori identificano i personaggi: ogni linea nell’immagine corrisponde al personaggio mostrato nel video con la cornice dello stesso colore."),
+        el("li", {}, "I colori identificano gli agenti: ogni linea nell’immagine corrisponde all’agente mostrato nel video con la cornice dello stesso colore."),
         el("li", {}, "Cliccando sull’immagine è possibile ingrandirla."),
         el("li", {}, "Il pulsante «Riproduci entrambi» avvia i due video contemporaneamente. È possibile rivederli quante volte si desidera."),
         el("li", {}, "Le domande contrassegnate con un asterisco (*) sono obbligatorie; i commenti sono facoltativi.")),
@@ -906,7 +907,7 @@
     return el("section", { class: "prose" },
       el("h2", {}, "Parte 2 di 2"),
       el("p", {}, `Questa parte comprende ${state.items.p2.length} confronti. Entrambi i video cambiano a ogni confronto.`),
-      el("p", {}, "I personaggi sono identificati dai colori verde e arancione. La loro posizione a sinistra o a destra può variare: per riconoscerli occorre fare riferimento al colore delle linee nell’immagine e delle cornici dei video."),
+      el("p", {}, "Gli agenti sono identificati dai colori verde e arancione. La loro posizione a sinistra o a destra può variare: per riconoscerli occorre fare riferimento al colore delle linee nell’immagine e delle cornici dei video."),
       el("p", {}, "Anche in questa parte, le domande riguardano separatamente i percorsi, il movimento complessivo e i cambi di direzione."),
       //el("p", { class: "muted" }, `Sono ${state.items.p2.length} confronti.`),
       navRow({ idx, onNext: () => go(idx + 1) }));
@@ -929,10 +930,10 @@
     const q1 = scale({ name: "percorso", left: sx.agente, right: dx.agente, value: r.percorso, onChange: set("percorso"),
       legend: "1. In base all’immagine, quale dei due percorsi appare più naturale?" });
     const q2 = scale({ name: "movimento", left: sx.agente, right: dx.agente, value: r.movimento, onChange: set("movimento"),
-      legend: "2. In base ai video, quale dei due personaggi si muove in modo più naturale nel complesso?",
+      legend: "2. In base ai video, quale dei due agenti si muove in modo più naturale nel complesso?",
       hint: "Aspetti da considerare: l’andatura, la velocità, il modo di avvicinarsi agli oggetti e di fermarsi." });
     const q3 = scale({ name: "rotazioni", left: sx.agente, right: dx.agente, value: r.rotazioni, onChange: set("rotazioni"),
-      legend: "3. Quale dei due personaggi ruota e curva in modo più naturale?" });
+      legend: "3. Quale dei due agenti ruota e curva in modo più naturale?" });
     const q4 = textArea({ name: "commento", value: r.commento, onChange: set("commento"),
       legend: "4. Eventuali osservazioni su questo confronto (facoltativa)" });
 
@@ -973,7 +974,7 @@
     const q = scale({
       name: "p1riassunto", left: "blu", right: "rosso", value: x.p1Riassunto,
       onChange: (v) => { x.p1Riassunto = v; save(); },
-      legend: "Considerando nel complesso i confronti appena visti, quale personaggio è apparso più naturale?",
+      legend: "Considerando nel complesso i confronti appena visti, quale agente è apparso più naturale?",
       labels: [["Decisamente", "l'Agente Blu"], ["Più", "l'Agente Blu"], ["", "Uguali"], ["Più", "gli Agenti Rossi"], ["Decisamente", "gli Agenti Rossi"]],
     });
     const c = textArea({ name: "p1commento", value: x.p1Commento, onChange: (v) => { x.p1Commento = v; save(); },
@@ -985,7 +986,7 @@
       q, c,
       el("div", { class: "blocco-valutazione" },
         el("h3", {}, "Valutazione della Parte 1"),
-        el("p", { class: "hint" }, "Queste domande riguardano il questionario, non i personaggi."),
+        el("p", { class: "hint" }, "Queste domande riguardano il questionario, non gli agenti."),
         d.fieldset),
       navRow({ idx, onNext: (err) => {
         const mancanti = (x.p1Riassunto ? [] : [q]).concat(d.mancanti());
@@ -999,7 +1000,7 @@
       progress(2, state.items.p2.length, state.items.p2.length),
       el("h2", {}, "Fine della Parte 2"),
       el("h3", {}, "Valutazione della Parte 2"),
-      el("p", { class: "hint" }, "Queste domande riguardano il questionario, non i personaggi."),
+      el("p", { class: "hint" }, "Queste domande riguardano il questionario, non gli agenti."),
       d.fieldset,
       navRow({ idx, onNext: (err) => {
         const mancanti = d.mancanti();
@@ -1015,7 +1016,7 @@
         value: v.scopo_chiaro, onChange: set("scopo_chiaro") })],
       ["scenario_chiaro", likert({ name: "scenario_chiaro", legend: "La descrizione dello scenario (il fast-food, i punti di sosta e la mappa) era chiara.",
         value: v.scenario_chiaro, onChange: set("scenario_chiaro") })],
-      ["video_chiari", likert({ name: "video_chiari", legend: "Nei video il movimento dei personaggi si vedeva chiaramente.",
+      ["video_chiari", likert({ name: "video_chiari", legend: "Nei video il movimento degli agenti si vedeva chiaramente.",
         value: v.video_chiari, onChange: set("video_chiari") })],
       ["vista_alto", likert({ name: "vista_alto", legend: "La ripresa dall’alto era adatta a valutare il movimento.",
         value: v.vista_alto, onChange: set("vista_alto") })],
@@ -1023,16 +1024,19 @@
         options: ["No, la vista dall’alto è sufficiente", "Sì, ad altezza d’occhi, come una persona presente nella scena",
           "Sì, una vista obliqua o laterale", "Non saprei"],
         value: v.altra_vista, onChange: set("altra_vista") })],
-      ["giudizio_complessivo", likert({ name: "giudizio_complessivo", legend: "Valutazione complessiva del questionario",
+      ["giudizio_complessivo", likert({ name: "giudizio_complessivo", legend: "Valutazione complessiva dell’esperimento",
         labels: GIUDIZIO, value: v.giudizio_complessivo, onChange: set("giudizio_complessivo") })],
     ];
     const altri = textArea({ name: "altri_compiti", value: v.altri_compiti || "", onChange: set("altri_compiti"),
       legend: "Ci sono altri compiti o confronti che sarebbe stato utile svolgere? (facoltativa)" });
+    const opinioni = textArea({ name: "opinioni_esperimento", value: v.opinioni_esperimento || "", onChange: set("opinioni_esperimento"),
+      legend: "Eventuali opinioni generali sull’esperimento (facoltativa)" });
     return el("section", {},
       el("h2", {}, "Valutazione del questionario"),
       el("p", { class: "hint" }, "Le ultime domande riguardano il questionario nel suo insieme e servono a migliorarlo."),
       obbligatorie.map(([, fs]) => fs),
       altri,
+      opinioni,
       navRow({ idx, onNext: (err) => {
         const mancanti = obbligatorie.filter(([k]) => !v[k]).map(([, fs]) => fs);
         return mancanti.length ? flagMissing(mancanti, err) : go(idx + 1);
@@ -1093,7 +1097,7 @@
         percorso_prefB: pref(r.percorso, it.aSinistra),
         movimento_prefB: pref(r.movimento, it.aSinistra),
         rotazioni_prefB: pref(r.rotazioni, it.aSinistra),
-        // *_raw: valore cliccato, 1 = personaggio di sinistra
+        // *_raw: valore cliccato, 1 = agente di sinistra
         percorso_raw: r.percorso || "",
         movimento_raw: r.movimento || "",
         rotazioni_raw: r.rotazioni || "",
