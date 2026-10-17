@@ -560,7 +560,7 @@
       pagina: 0,
       items: buildItems(version),
       risposte: {},
-      extra: { p1Riassunto: null, p1Commento: "", familiarita: "", commentoFinale: "" },
+      extra: { p1Riassunto: null, p1Commento: "", eta: "", sesso: "", familiarita: "", commentoFinale: "" },
       inviato: false,
     };
   }
@@ -1045,6 +1045,13 @@
 
   function viewFinal(_, idx) {
     const x = state.extra;
+    // Dati demografici (anonimi): età per fasce e sesso, obbligatori
+    const eta = scelta({ name: "eta", legend: "Età",
+      options: ["18–19", "20–24", "25–29", "30–39", "40–49", "50 o più", "Preferisco non rispondere"],
+      value: x.eta, onChange: (v) => { x.eta = v; save(); } });
+    const sesso = scelta({ name: "sesso", legend: "Sesso",
+      options: ["Femmina", "Maschio", "Preferisco non rispondere"],
+      value: x.sesso, onChange: (v) => { x.sesso = v; save(); } });
     const opts = ["Mai o quasi mai", "Qualche volta", "Spesso"];
     const fam = el("fieldset", {},
       el("legend", {}, "Frequenza di utilizzo di videogiochi o ambienti virtuali 3D (facoltativa)"),
@@ -1056,11 +1063,18 @@
     const c = textArea({ name: "finale", value: x.commentoFinale, onChange: (v) => { x.commentoFinale = v; save(); },
       legend: "Eventuali altri commenti o suggerimenti sul questionario (facoltativa)" });
     const status = el("div", {});
+    const err = el("p", { class: "form-error", role: "alert", hidden: true }, "Per inviare le risposte è necessario rispondere alle domande evidenziate.");
     const sendBtn = el("button", { class: "btn btn-primary", type: "button" }, "Invia le risposte");
-    sendBtn.addEventListener("click", () => submit(sendBtn, status));
+    sendBtn.addEventListener("click", () => {
+      const mancanti = [[x.eta, eta], [x.sesso, sesso]].filter(([v]) => !v).map(([, fs]) => fs);
+      if (mancanti.length) return flagMissing(mancanti, err);
+      err.hidden = true;
+      submit(sendBtn, status);
+    });
     return el("section", { class: "prose" },
       el("h2", {}, "Quasi finito!"),
-      fam, c, status,
+      el("p", { class: "hint" }, "Infine, alcuni dati sui partecipanti, raccolti in forma anonima."),
+      eta, sesso, fam, c, status, err,
       el("div", { class: "nav" },
         el("button", { class: "btn btn-quiet", type: "button", onclick: () => go(idx - 1) }, "Indietro"),
         sendBtn));
@@ -1117,6 +1131,8 @@
       durata_min: Math.round((now - new Date(state.iniziato)) / 6000) / 10,
       fase1_riassunto_prefB: state.extra.p1Riassunto || "",
       fase1_riassunto_commento: state.extra.p1Commento || "",
+      eta: state.extra.eta || "",
+      sesso: state.extra.sesso || "",
       familiarita_3d: state.extra.familiarita || "",
       commento_finale: state.extra.commentoFinale || "",
       schermo: `${window.innerWidth}x${window.innerHeight}`,
