@@ -303,6 +303,21 @@
     resize: vertical;
   }
   textarea:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
+  .num-input {
+    display: block;
+    width: 7rem;
+    margin: 0.5rem 0 0.6rem;
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--panel);
+  }
+  .num-input:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
+  .num-input:disabled { opacity: 0.45; }
+  .field-error { color: var(--error); font-size: 0.95rem; margin: 0 0 0.5rem; }
 
   /* Pulsanti */
   .btn {
@@ -1045,10 +1060,30 @@
 
   function viewFinal(_, idx) {
     const x = state.extra;
-    // Dati demografici (anonimi): età per fasce e sesso, obbligatori
-    const eta = scelta({ name: "eta", legend: "Età",
-      options: ["18–19", "20–24", "25–29", "30–39", "40–49", "50 o più", "Preferisco non rispondere"],
-      value: x.eta, onChange: (v) => { x.eta = v; save(); } });
+    // Dati demografici (anonimi): età (numero tra 18 e 99) e sesso, obbligatori
+    const NON_RISPONDO = "Preferisco non rispondere";
+    const etaValida = (v) => v === NON_RISPONDO || (/^\d+$/.test(v || "") && +v >= 18 && +v <= 99);
+    const etaInput = el("input", { class: "num-input", id: "eta-num", type: "number", inputmode: "numeric",
+      min: "18", max: "99", step: "1", "aria-label": "Età in anni" });
+    const etaNo = el("input", { type: "checkbox", name: "eta-nr", checked: x.eta === NON_RISPONDO });
+    const etaErr = el("p", { class: "field-error", hidden: true }, "Inserire un numero intero tra 18 e 99.");
+    if (x.eta && x.eta !== NON_RISPONDO) etaInput.value = x.eta;
+    etaInput.disabled = x.eta === NON_RISPONDO;
+    const eta = el("fieldset", { class: "need", "data-name": "eta" },
+      el("legend", {}, el("label", { for: "eta-num" }, "Età")),
+      etaInput, etaErr,
+      el("label", { class: "choice" }, etaNo, NON_RISPONDO));
+    etaInput.addEventListener("input", () => {
+      x.eta = etaInput.value.trim();
+      save();
+      if (etaValida(x.eta)) { eta.classList.remove("missing"); etaErr.hidden = true; }
+    });
+    etaNo.addEventListener("change", () => {
+      etaInput.disabled = etaNo.checked;
+      if (etaNo.checked) { etaInput.value = ""; x.eta = NON_RISPONDO; eta.classList.remove("missing"); etaErr.hidden = true; }
+      else x.eta = "";
+      save();
+    });
     const sesso = scelta({ name: "sesso", legend: "Sesso",
       options: ["Femmina", "Maschio", "Preferisco non rispondere"],
       value: x.sesso, onChange: (v) => { x.sesso = v; save(); } });
@@ -1066,7 +1101,8 @@
     const err = el("p", { class: "form-error", role: "alert", hidden: true }, "Per inviare le risposte è necessario rispondere alle domande evidenziate.");
     const sendBtn = el("button", { class: "btn btn-primary", type: "button" }, "Invia le risposte");
     sendBtn.addEventListener("click", () => {
-      const mancanti = [[x.eta, eta], [x.sesso, sesso]].filter(([v]) => !v).map(([, fs]) => fs);
+      etaErr.hidden = !x.eta || etaValida(x.eta);
+      const mancanti = [[etaValida(x.eta), eta], [!!x.sesso, sesso]].filter(([ok]) => !ok).map(([, fs]) => fs);
       if (mancanti.length) return flagMissing(mancanti, err);
       err.hidden = true;
       submit(sendBtn, status);
@@ -1131,7 +1167,7 @@
       durata_min: Math.round((now - new Date(state.iniziato)) / 6000) / 10,
       fase1_riassunto_prefB: state.extra.p1Riassunto || "",
       fase1_riassunto_commento: state.extra.p1Commento || "",
-      eta: state.extra.eta || "",
+      eta: /^\d+$/.test(state.extra.eta || "") ? Number(state.extra.eta) : (state.extra.eta || ""),
       sesso: state.extra.sesso || "",
       familiarita_3d: state.extra.familiarita || "",
       commento_finale: state.extra.commentoFinale || "",
